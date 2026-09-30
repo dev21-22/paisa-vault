@@ -1,0 +1,11 @@
+{
+  "name": "paisa-vault",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Private, encrypted expense tracker that runs in the browser. No server, no dependencies.",
+  "scripts": {
+    "start": "python3 -m http.server 8080 --bind 127.0.0.1",
+    "test": "node --test tests/*.test.js"
+  }
+}
