@@ -43,6 +43,10 @@ export function uid() {
   return toB64(randomBytes(9)).replace(/[+/=]/g, (c) => ({ '+': 'a', '/': 'b', '=': '' })[c]);
 }
 
+export function account(name, type, color = '#3F7AE0', extra = {}) {
+  return { id: uid(), name, type, opening: 0, bank: '', last4: '', color, archived: false, includeInNetWorth: true, minBalance: 0, creditLimit: 0, statementDay: 0, dueDay: 0, ...extra };
+}
+
 export function defaultState() {
   const c = (name, icon, color, kind = 'expense') => ({ id: uid(), name, icon, color, kind });
   return {
@@ -57,10 +61,12 @@ export function defaultState() {
       lastBackup: null,
     },
     features: defaultFeatureState(),
+    // { id, name, type: cash|bank|upi|card|loan|investment|other, opening(paise), bank, last4, color,
+    //   archived, includeInNetWorth, minBalance, creditLimit, statementDay, dueDay }
     accounts: [
-      { id: uid(), name: 'Cash', type: 'cash', opening: 0 },
-      { id: uid(), name: 'Bank account', type: 'bank', opening: 0 },
-      { id: uid(), name: 'UPI', type: 'upi', opening: 0 },
+      account('Cash', 'cash', '#2E9E63'),
+      account('Bank account', 'bank', '#3F7AE0'),
+      account('UPI', 'upi', '#8C6BD1'),
     ],
     categories: [
       c('Food & dining', '🍽️', '#E07A3F'),
@@ -81,11 +87,16 @@ export function defaultState() {
       c('Interest & returns', '💰', '#6A9E2E', 'income'),
       c('Other income', '➕', '#5F8F7A', 'income'),
     ],
-    txns: [],       // { id, type: expense|income|transfer, amount(paise), categoryId, accountId, toAccountId, date, note, tags[], created }
+    // { id, type: expense|income|transfer|adjustment, amount(paise; signed only for adjustment), categoryId,
+    //   splits?: [{ categoryId, amount }], accountId, toAccountId, date, note, tags[], created }
+    txns: [],
     budgets: {},    // { [categoryId | '_total']: paise per period }
     recurring: [],  // { id, name, type, amount, categoryId, accountId, freq, nextDate, anchorDay, autoAdd, active }
     goals: [],      // { id, name, target, saved, deadline, contributions: [{date, amount}] }
     debts: [],      // { id, person, direction: lent|borrowed, amount, date, due, note, settled, payments: [] }
+    rules: [],      // { id, match, categoryId }  "if note contains X, use category Y"
+    budgetRollover: {}, // { [categoryId | '_total']: true } carry unspent money into next period
+    dismissedSuggestions: [], // subscription suggestions the user said no to
   };
 }
 
@@ -94,8 +105,11 @@ function migrate(s) {
   const d = defaultState();
   s.settings = { ...d.settings, ...s.settings };
   s.features = { ...d.features, ...s.features };
-  for (const k of ['accounts', 'categories', 'txns', 'recurring', 'goals', 'debts']) s[k] ??= d[k];
+  for (const k of ['accounts', 'categories', 'txns', 'recurring', 'goals', 'debts', 'rules', 'dismissedSuggestions']) s[k] ??= d[k];
   s.budgets ??= {};
+  s.budgetRollover ??= {};
+  const colors = ['#3F7AE0', '#2E9E63', '#8C6BD1', '#E07A3F', '#D4A017', '#1F7A8C', '#C850C0'];
+  s.accounts = s.accounts.map((a, i) => ({ bank: '', last4: '', color: colors[i % colors.length], archived: false, includeInNetWorth: true, minBalance: 0, creditLimit: 0, statementDay: 0, dueDay: 0, ...a }));
   return s;
 }
 

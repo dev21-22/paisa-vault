@@ -49,7 +49,11 @@ export function parseSMS(text) {
     }
   }
 
+  // "A/c XX1234", "a/c no. ****1234", "Card ending 4321", "card no. XX4321"
+  const l4 = t.match(/\b(?:a\/c|acct|account|card)(?:\s*(?:no\.?|number))?(?:\s*ending(?:\s*with)?)?\s*[:\-]?\s*[x*.\s]*(\d{4})\b/i);
+  const last4 = l4 ? l4[1] : null;
+
   const upi = /\bupi\b|vpa/i.test(t);
   const card = /\bcard\b/i.test(t);
-  return { amount, type, merchant, date, method: upi ? 'upi' : card ? 'card' : null };
+  return { amount, type, merchant, date, last4, method: upi ? 'upi' : card ? 'card' : null };
 }

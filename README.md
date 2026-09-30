@@ -4,21 +4,38 @@ A private, encrypted expense tracker for your phone and laptop. It is free, work
 
 ## Features
 
-- **Quick add:** amount, category, account and note. The amount box does sums (`250+120`), and the app remembers which category each merchant goes in.
-- **Fill from a bank SMS:** paste a bank or UPI SMS and it fills in the amount, merchant, date and payment method. This happens on your device only.
-- **Home:** this month's spending, income and savings, today and this week, budget left, a safe-to-spend amount per day, bills due, and recent entries.
-- **Transactions:** search (by note, category, `#tag` or amount), filters, grouping by day, and editing or deleting with Undo.
-- **Reports:** spending by category (donut chart), daily spending with an average line, a 6-month trend, spending by tag, and automatic insights (change vs last month, savings rate, biggest increase, busiest weekday).
-- **Budgets:** an overall limit and per-category limits, with warnings at 80% and 100%.
-- **Accounts:** cash, bank, UPI, credit cards and more, with running balances and transfers.
-- **Bills & subscriptions:** weekly, monthly, quarterly or yearly. You get reminders on Home, or they can be added automatically.
-- **Savings goals:** shows how much to save each month to reach a target by a date.
-- **Lent & borrowed:** tracks who owes whom, including part repayments.
-- **Categories:** add, rename, and change the icon and colour.
-- **Salary-cycle month:** a "month" can start on any day, for example the 25th.
-- **Indian formatting:** amounts show as ₹1,23,456, with lakh and crore grouping.
-- **Hide amounts:** blurs every number, useful in public.
-- **Light and dark mode**, and it can be installed as an app on your phone and laptop.
+**Adding entries**
+- **Quick add:** amount, category, account and note. The amount box does sums (`250+120`).
+- **One-tap frequent entries:** items you add often (tea ₹20, metro ₹40) appear as buttons.
+- **Split transactions:** one DMart bill can be divided across Groceries and Household.
+- **Fill from a bank SMS:** paste a bank or UPI SMS to fill in the amount, merchant, date, *and the right account* (matched by its last 4 digits).
+- **Smart categories:** your own rules ("contains milkman → Groceries"), then your past entries, then 150+ common Indian merchants (Swiggy, Zomato, Uber, Jio, BigBasket, IRCTC and more).
+
+**Multiple bank accounts and cards**
+- **Account details:** bank name, last 4 digits, colour, and grouping (banks, cards, cash & wallets, investments, loans).
+- **Per-account screen:** balance, 90-day balance chart, money in and out this month, recent entries.
+- **Update balance:** enter what your bank app shows, and a correction is added so the two match. Corrections don't count as income or spending.
+- **Credit cards:** statement date, due date, bill amount, unbilled amount, limit used (with a warning above 30%), a "Pay card bill" button, and reminders on Home.
+- **Minimum balance alerts** for bank accounts.
+- **Net worth:** what you own minus what you owe, with a 12-month chart. You can leave accounts out of it.
+- **Closed accounts** are hidden but keep their history.
+- **Bank statement import (CSV):** works with HDFC, SBI, ICICI, Axis, Kotak and other formats. It cleans up UPI and NEFT descriptions, fills in categories, skips duplicates, and records ATM withdrawals as transfers to Cash.
+
+**Planning**
+- **Budgets:** an overall limit and per-category limits, with 80% and 100% warnings and optional **rollover** (unspent money carries into next month).
+- **Safe-to-spend per day** and a **spending pace** warning ("at this pace you'll overspend by ₹X").
+- **Bills & subscriptions:** weekly, monthly, quarterly or yearly, as reminders or added automatically.
+- **Subscription detection:** spots repeating payments you haven't set up yet, like Netflix or a gym.
+- **30-day cash forecast:** money coming in and going out, the balance afterwards, and a warning if your balance might go below zero.
+- **Savings goals** with a monthly amount needed; **lent & borrowed** tracking with part repayments.
+
+**Understanding your money**
+- **Reports:** category donut, daily bars with an average line, 6-month trend, **spending calendar** (with no-spend days), spending by account and by tag, and automatic insights.
+- **Search** by note, category, `#tag` or amount, with filters by type, category, account and amount range.
+
+**Everyday comfort**
+- Salary-cycle month (it can start on any day), Indian ₹ formatting, hide-amounts mode, and light/dark themes.
+- Installs as an app on phone and laptop and works offline.
 
 ## Security
 

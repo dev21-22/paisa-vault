@@ -1,5 +1,5 @@
 import { esc, money, donut, barChart, emptyState, $, $$ } from '../ui.js';
-import { currentPeriod, inRange, totals, byCategory, catMap } from '../calc.js';
+import { currentPeriod, inRange, totals, byCategory, catMap, dailySpend } from '../calc.js';
 import { periodLabel, parseISO, addDays, daysBetween, iso } from '../lib/dates.js';
 import { formatINRShort } from '../lib/money.js';
 import { periodNav } from '../components.js';
@@ -64,6 +64,12 @@ export function render(root, ctx) {
   const maxWd = wd.indexOf(Math.max(...wd));
   if (wd[maxWd] > 0) insights.push(`You spend the most on <strong>${['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'][maxWd]}</strong>.`);
 
+  // By account
+  const accs = Object.fromEntries(state.accounts.map((a) => [a.id, a]));
+  const accSpend = new Map();
+  ptx.filter((t) => t.type === 'expense').forEach((t) => accSpend.set(t.accountId, (accSpend.get(t.accountId) || 0) + t.amount));
+  const byAcc = [...accSpend.entries()].sort((a, b) => b[1] - a[1]);
+
   // Tags
   const tagMap = new Map();
   ptx.filter((t) => t.type === 'expense').forEach((t) => (t.tags || []).forEach((g) => tagMap.set(g, (tagMap.get(g) || 0) + t.amount)));
@@ -119,6 +125,13 @@ export function render(root, ctx) {
       <div class="legend-inline"><span><i class="sw in"></i>Income</span><span><i class="sw out"></i>Expenses</span></div>
     </div>
 
+    ${ptx.length ? calendar(period, dailySpend(ptx, period), today) : ''}
+
+    ${byAcc.length > 1 ? `<div class="card"><h2 class="card-title">Spending by account</h2>
+      <div class="cat-bars">${byAcc.map(([id, v]) => `<div class="cat-bar"><span class="cat-name">${esc(accs[id]?.name || '?')}</span>
+        <span class="cat-track"><span style="width:${Math.max(2, (v / byAcc[0][1]) * 100)}%;background:${esc(accs[id]?.color || 'var(--accent)')}"></span></span>
+        <span class="cat-amt">${money(v)}</span></div>`).join('')}</div></div>` : ''}
+
     ${tags.length ? `<div class="card"><h2 class="card-title">By tag</h2>
       <div class="tag-list">${tags.map(([g, v]) => `<span class="tag-pill">#${esc(g)} ${money(v)}</span>`).join('')}</div></div>` : ''}
   </div>`;
@@ -126,4 +139,28 @@ export function render(root, ctx) {
   $('#rp-prev', root).onclick = () => { offset--; render(root, ctx); };
   $('#rp-next', root).onclick = () => { offset++; render(root, ctx); };
   $$('[data-cat]', root).forEach((b) => (b.onclick = () => ctx.go('transactions', { categoryId: b.dataset.cat, offset })));
+}
+
+// Month calendar, each day shaded by how much was spent.
+function calendar(period, spend, today) {
+  const days = daysBetween(period.start, period.end) + 1;
+  const max = Math.max(1, ...Object.values(spend));
+  const lead = (parseISO(period.start).getDay() + 6) % 7; // Monday first
+  const cells = [];
+  for (let i = 0; i < lead; i++) cells.push('<span class="cal-cell empty"></span>');
+  for (let i = 0; i < days; i++) {
+    const d = addDays(period.start, i);
+    const v = spend[d] || 0;
+    const level = v ? Math.min(4, Math.ceil((v / max) * 4)) : 0;
+    const future = d > today;
+    cells.push(`<span class="cal-cell l${level} ${d === today ? 'today' : ''} ${future ? 'future' : ''}" title="${esc(d)}: ${esc(formatINRShort(v))}">
+      <span class="cal-day">${parseISO(d).getDate()}</span>${v ? `<span class="cal-amt amt">${esc(formatINRShort(v).replace('₹', ''))}</span>` : ''}</span>`);
+  }
+  const noSpend = Array.from({ length: days }, (_, i) => addDays(period.start, i)).filter((d) => d <= today && !spend[d]).length;
+  return `<div class="card">
+    <div class="row-between"><h2 class="card-title">Spending calendar</h2><span class="muted small">${noSpend} no-spend day${noSpend === 1 ? '' : 's'}</span></div>
+    <div class="cal-head">${['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((x) => `<span>${x}</span>`).join('')}</div>
+    <div class="cal-grid">${cells.join('')}</div>
+    <div class="legend-inline"><span>Less</span><i class="cal-key l1"></i><i class="cal-key l2"></i><i class="cal-key l3"></i><i class="cal-key l4"></i><span>More</span></div>
+  </div>`;
 }

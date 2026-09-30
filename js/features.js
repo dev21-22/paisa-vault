@@ -7,6 +7,7 @@
 // Fields:
 //   id       unique key, also the file name in js/features/
 //   title    name shown in navigation
+//   short    optional shorter name for the phone's bottom bar
 //   icon     key into ICONS in js/ui.js
 //   nav      'main' = bottom bar on phones, 'more' = inside the More screen
 //   core     true = cannot be switched off
@@ -15,15 +16,15 @@
 
 export const FEATURES = [
   { id: 'home',         title: 'Home',          icon: 'home',     nav: 'main', core: true,  on: true, blurb: 'Month at a glance, bills due, recent spending.' },
-  { id: 'transactions', title: 'Transactions',  icon: 'list',     nav: 'main', core: true,  on: true, blurb: 'Every expense, income and transfer, with search and filters.' },
-  { id: 'reports',      title: 'Reports',       icon: 'chart',    nav: 'main', core: false, on: true, blurb: 'Charts by category, day and month, with insights.' },
-  { id: 'budgets',      title: 'Budgets',       icon: 'target',   nav: 'more', core: false, on: true, blurb: 'Monthly limits per category with warnings.' },
-  { id: 'accounts',     title: 'Accounts',      icon: 'wallet',   nav: 'more', core: false, on: true, blurb: 'Cash, bank, UPI and cards with running balances.' },
-  { id: 'recurring',    title: 'Bills & subscriptions', icon: 'repeat', nav: 'more', core: false, on: true, blurb: 'Rent, EMIs, subscriptions. Reminders or auto-add.' },
+  { id: 'transactions', title: 'Transactions',  short: 'History', icon: 'list', nav: 'main', core: true,  on: true, blurb: 'Every expense, income and transfer, with search, filters and splits.' },
+  { id: 'reports',      title: 'Reports',       icon: 'chart',    nav: 'main', core: false, on: true, blurb: 'Charts by category, day, account and month, a spending calendar and insights.' },
+  { id: 'budgets',      title: 'Budgets',       icon: 'target',   nav: 'more', core: false, on: true, blurb: 'Monthly limits per category with warnings and optional rollover.' },
+  { id: 'accounts',     title: 'Accounts',      icon: 'wallet',   nav: 'main', core: false, on: true, blurb: 'All your banks, cards and cash: balances, net worth, card bills, statement import.' },
+  { id: 'recurring',    title: 'Bills & subscriptions', icon: 'repeat', nav: 'more', core: false, on: true, blurb: 'Rent, EMIs, subscriptions. Reminders, auto-add, 30-day forecast and detection.' },
   { id: 'goals',        title: 'Savings goals', icon: 'flag',     nav: 'more', core: false, on: true, blurb: 'Save towards a target amount by a date.' },
   { id: 'debts',        title: 'Lent & borrowed', icon: 'people', nav: 'more', core: false, on: true, blurb: 'Track money you gave or took from friends and family.' },
-  { id: 'categories',   title: 'Categories',    icon: 'tag',      nav: 'more', core: true,  on: true, blurb: 'Add, rename or recolour categories.' },
-  { id: 'backup',       title: 'Backup & sync', icon: 'shield',   nav: 'more', core: true,  on: true, blurb: 'Encrypted backup file to move data between phone and laptop. CSV export.' },
+  { id: 'categories',   title: 'Categories',    icon: 'tag',      nav: 'more', core: true,  on: true, blurb: 'Add, rename or recolour categories, and set auto-category rules.' },
+  { id: 'backup',       title: 'Backup & sync', icon: 'shield',   nav: 'more', core: true,  on: true, blurb: 'Encrypted backup to sync phone and laptop. Bank statement import. CSV export.' },
   { id: 'settings',     title: 'Settings',      icon: 'gear',     nav: 'more', core: true,  on: true, blurb: 'Password, auto-lock, privacy and features.' },
 ];
 

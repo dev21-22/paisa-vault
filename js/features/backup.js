@@ -3,6 +3,7 @@ import { makeBackup, openBackup } from '../lib/crypto.js';
 import { verifyPassword, replaceState, flush } from '../store.js';
 import { catMap, accMap } from '../calc.js';
 import { iso, prettyDate } from '../lib/dates.js';
+import { openStatementImport } from '../import-statement.js';
 
 export function render(root, ctx) {
   const { state } = ctx;
@@ -31,6 +32,12 @@ export function render(root, ctx) {
     </div>
 
     <div class="card">
+      <h2 class="card-title">Import a bank statement</h2>
+      <p>Bring in months of history at once from your bank's CSV statement. Duplicates are detected and categories are filled in automatically.</p>
+      <button type="button" class="btn" id="bk-stmt">${icon('upload', 18)} Import statement (CSV)</button>
+    </div>
+
+    <div class="card">
       <h2 class="card-title">Export to spreadsheet</h2>
       <p>A CSV file opens in Excel or Google Sheets. <strong class="neg">It is not encrypted</strong>, so delete it after use.</p>
       <button type="button" class="btn" id="bk-csv">${icon('download', 18)} Export CSV</button>
@@ -48,6 +55,7 @@ export function render(root, ctx) {
     importBackup(ctx, file);
   };
   $('#bk-csv', root).onclick = () => exportCSV(state);
+  $('#bk-stmt', root).onclick = () => openStatementImport(ctx);
 }
 
 function exportBackup(ctx) {
@@ -122,15 +130,40 @@ function importBackup(ctx, file) {
 }
 
 // Union by id. Items already on this device win if both have the same id.
+// Accounts and categories with the same name are treated as the same thing, so two devices
+// set up separately don't end up with two "Cash" accounts or two "Food & dining" categories.
 export function merge(into, from) {
   let added = 0;
-  for (const k of ['accounts', 'categories', 'txns', 'recurring', 'goals', 'debts']) {
-    const have = new Set((into[k] || []).map((x) => x.id));
+  const remap = {};
+  const key = (x, kindField) => `${(x.name || '').trim().toLowerCase()}|${x[kindField] || ''}`;
+  for (const [k, kindField] of [['accounts', 'type'], ['categories', 'kind']]) {
+    into[k] ??= [];
+    const byId = new Set(into[k].map((x) => x.id));
+    const byName = new Map(into[k].map((x) => [key(x, kindField), x.id]));
     for (const item of from[k] || []) {
-      if (!have.has(item.id)) { into[k].push(item); added++; }
+      if (byId.has(item.id)) continue;
+      const same = byName.get(key(item, kindField));
+      if (same) remap[item.id] = same;
+      else { into[k].push(item); byId.add(item.id); added++; }
     }
   }
-  for (const [k, v] of Object.entries(from.budgets || {})) if (!(k in into.budgets)) into.budgets[k] = v;
+  const fix = (id) => remap[id] || id;
+  const fixItem = (x) => {
+    const y = { ...x };
+    for (const f of ['accountId', 'toAccountId', 'categoryId']) if (y[f]) y[f] = fix(y[f]);
+    if (y.splits) y.splits = y.splits.map((p) => ({ ...p, categoryId: fix(p.categoryId) }));
+    return y;
+  };
+  for (const k of ['txns', 'recurring', 'goals', 'debts', 'rules']) {
+    into[k] ??= [];
+    const have = new Set(into[k].map((x) => x.id));
+    for (const item of from[k] || []) {
+      if (!have.has(item.id)) { into[k].push(fixItem(item)); added++; }
+    }
+  }
+  for (const [k, v] of Object.entries(from.budgets || {})) if (!(fix(k) in into.budgets)) into.budgets[fix(k)] = v;
+  into.budgetRollover ??= {};
+  for (const [k, v] of Object.entries(from.budgetRollover || {})) if (!(fix(k) in into.budgetRollover)) into.budgetRollover[fix(k)] = v;
   return added;
 }
 
@@ -143,10 +176,14 @@ function exportCSV(state) {
     return `"${s.replace(/"/g, '""')}"`;
   };
   const rows = [['Date', 'Type', 'Amount (INR)', 'Category', 'Account', 'To account', 'Note', 'Tags']];
-  [...state.txns].sort((a, b) => (a.date < b.date ? -1 : 1)).forEach((t) => rows.push([
-    t.date, t.type, (t.amount / 100).toFixed(2), cats[t.categoryId]?.name || '', accs[t.accountId]?.name || '',
-    accs[t.toAccountId]?.name || '', t.note || '', (t.tags || []).join(' '),
-  ]));
+  [...state.txns].sort((a, b) => (a.date < b.date ? -1 : 1)).forEach((t) => {
+    const ps = t.splits?.length ? t.splits : [{ categoryId: t.categoryId, amount: t.amount }];
+    // A split transaction becomes one row per category so spreadsheet totals stay right.
+    ps.forEach((p) => rows.push([
+      t.date, t.type, (p.amount / 100).toFixed(2), cats[p.categoryId]?.name || '', accs[t.accountId]?.name || '',
+      accs[t.toAccountId]?.name || '', t.note || '', (t.tags || []).join(' '),
+    ]));
+  });
   const csv = '﻿' + rows.map((r) => r.map((v, i) => (i === 2 ? v : q(v))).join(',')).join('\r\n');
   downloadFile(`paisa-vault-${iso()}.csv`, csv, 'text/csv');
   toast('CSV exported. Remember it is not encrypted.');

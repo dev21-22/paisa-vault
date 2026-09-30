@@ -7,13 +7,20 @@ import { catMap, accMap } from './calc.js';
 export function txnRow(t, cats, accs) {
   const c = cats[t.categoryId];
   const isTransfer = t.type === 'transfer';
-  const title = t.note || (isTransfer ? 'Transfer' : c?.name || 'Uncategorised');
-  const sub = isTransfer
-    ? `${esc(accs[t.accountId]?.name || '?')} → ${esc(accs[t.toAccountId]?.name || '?')}`
-    : `${esc(c?.name || '')}${accs[t.accountId] ? ` · ${esc(accs[t.accountId].name)}` : ''}`;
-  const amt = t.type === 'income' ? money(t.amount, { sign: true, cls: 'pos' }) : t.type === 'expense' ? money(-t.amount, { cls: 'neg' }) : money(t.amount, { cls: 'neutral' });
+  const isAdj = t.type === 'adjustment';
+  const split = t.splits?.length > 1;
+  const title = t.note || (isTransfer ? 'Transfer' : isAdj ? 'Balance correction' : c?.name || 'Uncategorised');
+  let sub;
+  if (isTransfer) sub = `${esc(accs[t.accountId]?.name || '?')} → ${esc(accs[t.toAccountId]?.name || '?')}`;
+  else if (isAdj) sub = `Balance correction · ${esc(accs[t.accountId]?.name || '')}`;
+  else sub = `${split ? `Split: ${t.splits.map((p) => esc(cats[p.categoryId]?.name || '?')).join(', ')}` : esc(c?.name || '')}${accs[t.accountId] ? ` · ${esc(accs[t.accountId].name)}` : ''}`;
+  const amt = t.type === 'income' ? money(t.amount, { sign: true, cls: 'pos' })
+    : t.type === 'expense' ? money(-t.amount, { cls: 'neg' })
+      : isAdj ? money(t.amount, { sign: true, cls: 'neutral' }) : money(t.amount, { cls: 'neutral' });
+  const ic = isTransfer ? icon('swap', 18) : isAdj ? icon('check', 18) : split ? icon('list', 18) : esc(c?.icon || '•');
+  const color = isTransfer || isAdj ? 'var(--muted)' : split ? 'var(--accent)' : c?.color || 'var(--muted)';
   return `<button type="button" class="txn" data-txn="${esc(t.id)}">
-    <span class="txn-ic" style="--c:${esc(isTransfer ? 'var(--muted)' : c?.color || 'var(--muted)')}">${isTransfer ? icon('swap', 18) : esc(c?.icon || '•')}</span>
+    <span class="txn-ic" style="--c:${esc(color)}">${ic}</span>
     <span class="txn-main"><span class="txn-title">${esc(title)}</span><span class="txn-sub">${sub}${t.tags?.length ? ` · ${t.tags.map((x) => `#${esc(x)}`).join(' ')}` : ''}</span></span>
     <span class="txn-amt">${amt}</span>
   </button>`;

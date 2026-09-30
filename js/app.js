@@ -201,7 +201,7 @@ export function applyTheme() {
 function renderShell() {
   const feats = enabledFeatures(store.state);
   const main = feats.filter((f) => f.nav === 'main');
-  const navLink = (f, cls = '') => `<a href="#${f.id}" class="nav-link ${cls}" data-route="${f.id}">${icon(f.icon)}<span>${esc(f.title)}</span></a>`;
+  const navLink = (f, short = false) => `<a href="#${f.id}" class="nav-link" data-route="${f.id}">${icon(f.icon)}<span>${esc(short && f.short ? f.short : f.title)}</span></a>`;
   root.innerHTML = `
   <div class="shell">
     <aside class="sidebar" aria-label="Main">
@@ -220,9 +220,9 @@ function renderShell() {
     </div>
     <button type="button" class="fab" id="fab" aria-label="Add transaction">${icon('plus', 26)}</button>
     <nav class="bottombar" aria-label="Main">
-      ${main.slice(0, 2).map((f) => navLink(f)).join('')}
+      ${main.slice(0, 2).map((f) => navLink(f, true)).join('')}
       <span class="bottombar-gap" aria-hidden="true"></span>
-      ${main.slice(2).map((f) => navLink(f)).join('')}
+      ${main.slice(2).map((f) => navLink(f, true)).join('')}
       <a href="#more" class="nav-link" data-route="more">${icon('more')}<span>More</span></a>
     </nav>
   </div>`;

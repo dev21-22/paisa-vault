@@ -1,5 +1,5 @@
 import { esc, money, icon, emptyState, $, $$ } from '../ui.js';
-import { currentPeriod, inRange, totals, catMap } from '../calc.js';
+import { currentPeriod, inRange, totals, catMap, hasCategory, parts } from '../calc.js';
 import { periodLabel } from '../lib/dates.js';
 import { txnGroups, bindTxnClicks, periodNav } from '../components.js';
 import { toPaise } from '../lib/money.js';
@@ -10,6 +10,7 @@ const f = { q: '', type: 'all', cat: 'all', acc: 'all', offset: 0, range: 'perio
 export function render(root, ctx) {
   const { state } = ctx;
   if (ctx.params.categoryId) { f.cat = ctx.params.categoryId; f.type = 'all'; ctx.params.categoryId = null; }
+  if (ctx.params.accountId) { f.acc = ctx.params.accountId; f.range = 'all'; ctx.params.accountId = null; }
   if (ctx.params.offset != null) { f.offset = ctx.params.offset; f.range = 'period'; ctx.params.offset = null; }
 
   const period = currentPeriod(state, f.offset);
@@ -17,7 +18,7 @@ export function render(root, ctx) {
 
   let list = f.range === 'period' ? inRange(state.txns, period) : state.txns;
   if (f.type !== 'all') list = list.filter((t) => t.type === f.type);
-  if (f.cat !== 'all') list = list.filter((t) => t.categoryId === f.cat);
+  if (f.cat !== 'all') list = list.filter((t) => hasCategory(t, f.cat));
   if (f.acc !== 'all') list = list.filter((t) => t.accountId === f.acc || t.toAccountId === f.acc);
   const min = toPaise(f.min);
   const max = toPaise(f.max);
@@ -26,7 +27,7 @@ export function render(root, ctx) {
   if (f.q.trim()) {
     const words = f.q.trim().toLowerCase().split(/\s+/);
     list = list.filter((t) => {
-      const hay = `${t.note} ${cats[t.categoryId]?.name || ''} ${(t.tags || []).map((x) => `#${x}`).join(' ')} ${t.amount / 100}`.toLowerCase();
+      const hay = `${t.note} ${parts(t).map((p) => cats[p.categoryId]?.name || '').join(' ')} ${(t.tags || []).map((x) => `#${x}`).join(' ')} ${t.amount / 100}`.toLowerCase();
       return words.every((w) => hay.includes(w));
     });
   }
@@ -51,11 +52,11 @@ export function render(root, ctx) {
       <summary>Filters${filtersActive ? ' (on)' : ''}</summary>
       <div class="grid-3">
         <label class="field"><span class="label">Type</span><select id="tx-type">
-          ${opt('all', 'All', f.type)}${opt('expense', 'Expenses', f.type)}${opt('income', 'Income', f.type)}${opt('transfer', 'Transfers', f.type)}</select></label>
+          ${opt('all', 'All', f.type)}${opt('expense', 'Expenses', f.type)}${opt('income', 'Income', f.type)}${opt('transfer', 'Transfers', f.type)}${opt('adjustment', 'Balance corrections', f.type)}</select></label>
         <label class="field"><span class="label">Category</span><select id="tx-cat">
           ${opt('all', 'All categories', f.cat)}${state.categories.map((c) => opt(c.id, `${c.icon} ${c.name}`, f.cat)).join('')}</select></label>
         <label class="field"><span class="label">Account</span><select id="tx-acc">
-          ${opt('all', 'All accounts', f.acc)}${state.accounts.map((a) => opt(a.id, a.name, f.acc)).join('')}</select></label>
+          ${opt('all', 'All accounts', f.acc)}${state.accounts.map((a) => opt(a.id, a.name + (a.archived ? ' (closed)' : ''), f.acc)).join('')}</select></label>
         <label class="field"><span class="label">Min ₹</span><input id="tx-min" inputmode="decimal" value="${esc(f.min)}"></label>
         <label class="field"><span class="label">Max ₹</span><input id="tx-max" inputmode="decimal" value="${esc(f.max)}"></label>
         <div class="field field-end"><button type="button" class="btn" id="tx-clear">Clear filters</button></div>

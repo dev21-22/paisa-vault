@@ -11,12 +11,14 @@ js/app.js             Boot, setup/unlock/restore screens, navigation, auto-lock
 js/store.js           Encrypted IndexedDB vault, in-memory `state`, defaultState(), migrate()
 js/features.js        FEATURE REGISTRY: every screen is listed here
 js/features/<id>.js   One screen per file; exports render(root, ctx)
-js/txn-form.js        Shared add/edit transaction sheet
+js/txn-form.js        Shared add/edit transaction sheet (splits, quick add, SMS fill)
+js/import-statement.js Bank statement CSV import sheet
 js/components.js      Shared UI pieces (transaction rows, period nav)
 js/ui.js              esc(), icons, sheets, toasts, confirmSheet(), SVG charts
 js/calc.js            Pure calculations (totals, balances, evalAmount, suggestions)
-js/lib/               crypto.js, money.js (paise), dates.js (YYYY-MM-DD + periods), sms.js
-tests/core.test.js    node --test (npm test)
+js/lib/               crypto.js, money.js (paise), dates.js (YYYY-MM-DD + periods), sms.js,
+                      merchants.js (built-in Indian merchant -> category), statement.js (CSV parsing)
+tests/*.test.js       node --test (npm test)
 ```
 
 ## Adding a feature
@@ -35,6 +37,12 @@ Removing a feature: delete its registry entry, file, and `sw.js` line. Leave its
 - Mutate `state`, then `ctx.save()` (debounced, encrypted write), then `ctx.refresh()`.
 - Destructive actions use `confirmSheet()` or a toast with Undo; never `alert/confirm/prompt`.
 - Every form field has an id; errors are shown inline in a `.error` element with plain-language text.
+
+## Data model notes
+- Transaction types: expense, income, transfer, adjustment (balance correction; amount is signed; never counted as income/spend).
+- Split transactions have `splits: [{categoryId, amount}]` summing to `amount`; always read categories via `parts(t)` / `hasCategory()`.
+- Liability accounts (`card`, `loan`) hold negative balances; show them as "owed" with `isLiability()`.
+- Backup `merge()` matches accounts/categories by name so separately set-up devices don't duplicate them.
 
 ## Security rules (must keep)
 - **Escape all user text with `esc()`** before putting it in `innerHTML`, including names, notes, tags, category names.
