@@ -1,6 +1,6 @@
 // Offline support. Caches only the app's own files, never your data (your data lives encrypted in IndexedDB).
 // Bump VERSION whenever app files change so phones pick up the update.
-const VERSION = 'pv-2';
+const VERSION = 'pv-3';
 
 const FILES = [
   './', './index.html', './manifest.webmanifest', './css/app.css',
@@ -9,6 +9,8 @@ const FILES = [
   './js/features/home.js', './js/features/transactions.js', './js/features/reports.js', './js/features/budgets.js',
   './js/features/accounts.js', './js/features/recurring.js', './js/features/goals.js', './js/features/debts.js',
   './js/features/categories.js', './js/features/backup.js', './js/features/settings.js',
+  './fonts/bricolage-grotesque-latin-wght-normal.woff2', './fonts/bricolage-grotesque-latin-ext-wght-normal.woff2',
+  './fonts/geist-latin-wght-normal.woff2', './fonts/geist-latin-ext-wght-normal.woff2',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png',
 ];
 

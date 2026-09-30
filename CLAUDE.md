@@ -5,7 +5,10 @@ Private, encrypted, offline expense tracker (PWA). Plain HTML/CSS/JS ES modules 
 ## Layout
 ```
 index.html            Shell + strict CSP meta tag
-css/app.css           All styles. Colours are tokens on :root with dark variants; use tokens, never literal colours
+css/app.css           All styles ("Midnight Glass": aurora background, glass cards, bento Home). Colours are tokens
+                      on :root with dark variants; use tokens, never literal colours
+fonts/                Bundled Bricolage Grotesque (display) + Geist (text), OFL licensed. No web fonts from outside.
+guide/                Pocket guide: guide.html is the source; the PDF is printed from it with headless Chrome
 sw.js                 Offline cache. Add every new file to FILES and bump VERSION on every release
 js/app.js             Boot, setup/unlock/restore screens, navigation, auto-lock
 js/store.js           Encrypted IndexedDB vault, in-memory `state`, defaultState(), migrate()

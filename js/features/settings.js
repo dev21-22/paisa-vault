@@ -57,6 +57,11 @@ export function render(root, ctx) {
       <p class="muted small">Permanently erase all data from this device. Make a backup first if you want to keep anything.</p>
       <button type="button" class="btn btn-danger" id="st-wipe">${icon('trash', 18)} Erase all data on this device</button>
     </div>
+    <div class="card">
+      <h2 class="card-title">Help</h2>
+      <p class="muted small">A pocket guide to what the app can do in real situations: bank SMS, card bills, ATM cash, syncing, lost phone and more.</p>
+      <div class="row-wrap"><a class="btn" href="guide/Paisa-Vault-Guide.pdf" target="_blank" rel="noopener">Open the pocket guide (PDF)</a></div>
+    </div>
     <p class="muted small center">Paisa Vault · data stays on this device</p>
   </div>`;
 

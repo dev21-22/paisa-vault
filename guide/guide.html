@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<title>Paisa Vault — Pocket Guide</title>
+<style>
+  @page { size: A5; margin: 14mm 12mm 16mm; }
+  :root { --ink: #151A2D; --muted: #5D6480; --line: #DFE2EC; --accent: #2F3FB8; --soft: #EEF0FB; --warn: #A96A10; --neg: #BF3530; --pos: #1B7F4F; }
+  * { box-sizing: border-box; }
+  body { font: 9.2pt/1.42 "Noto Sans", "DejaVu Sans", sans-serif; color: var(--ink); margin: 0; }
+  h1, h2, h3 { margin: 0; line-height: 1.2; }
+  h2 { font-size: 15pt; color: var(--accent); margin: 0 0 3mm; padding-bottom: 2mm; border-bottom: 1.5pt solid var(--accent); break-after: avoid; }
+  h3 { font-size: 10.5pt; margin: 4mm 0 1.5mm; break-after: avoid; }
+  p { margin: 0 0 2mm; }
+  section { break-before: page; }
+  .muted { color: var(--muted); }
+  .cover { height: 178mm; display: flex; flex-direction: column; justify-content: space-between; break-after: page; }
+  .brand { display: flex; align-items: center; gap: 3mm; color: var(--accent); font-weight: 800; font-size: 13pt; }
+  .brand svg { width: 12mm; height: 12mm; }
+  .cover h1 { font-size: 28pt; letter-spacing: -0.5pt; margin-top: 18mm; }
+  .cover .sub { font-size: 12pt; color: var(--muted); margin-top: 3mm; max-width: 95mm; }
+  .link { font-weight: 700; color: var(--accent); word-break: break-all; }
+  .box { border: 1pt solid var(--line); border-radius: 3mm; padding: 3mm 3.5mm; margin: 2.5mm 0; break-inside: avoid; }
+  .box.key { background: var(--soft); border-color: #C9CEF3; }
+  .box.warn { background: #FBF4E6; border-color: #E9CF9C; }
+  .box.danger { background: #FBEDEC; border-color: #EBB9B5; }
+  .box strong.t { display: block; margin-bottom: 1mm; }
+  .sit { break-inside: avoid; border-left: 2.2pt solid var(--accent); padding: 1mm 0 1mm 3mm; margin: 0 0 2.4mm; }
+  .sit .q { font-weight: 700; font-size: 10pt; }
+  .sit .a { margin: 1mm 0 0; }
+  .sit ol, .sit ul, .box ol, .box ul { margin: 1mm 0 0; padding-left: 4.5mm; }
+  .sit li, .box li { margin-bottom: 0.6mm; }
+  .path { display: inline-block; background: var(--soft); color: var(--accent); border-radius: 1.5mm; padding: 0 1.5mm; font-weight: 700; font-size: 8.6pt; white-space: nowrap; }
+  .tag { font-size: 7.6pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4pt; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; font-size: 8.8pt; margin: 2mm 0; break-inside: auto; }
+  th, td { text-align: left; vertical-align: top; padding: 1.6mm 1.8mm; border-bottom: 0.6pt solid var(--line); }
+  th { font-size: 7.6pt; text-transform: uppercase; letter-spacing: 0.4pt; color: var(--muted); }
+  tr { break-inside: avoid; }
+  .toc { columns: 1; padding: 0; list-style: none; margin: 0; }
+  .toc li { display: flex; gap: 3mm; padding: 1.8mm 0; border-bottom: 0.6pt solid var(--line); }
+  .toc b { color: var(--accent); min-width: 6mm; }
+  .check li { list-style: none; position: relative; padding-left: 1mm; }
+  .check li::before { content: "☐"; position: absolute; left: -4.5mm; color: var(--accent); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5mm; }
+  .grid2 .box { margin: 0; }
+  .foot { font-size: 8pt; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div>
+    <div class="brand">
+      <svg viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#2F3FB8"/><path d="M256 88 392 136v104c0 92-60 156-136 188-76-32-136-96-136-188V136Z" fill="#4757D1"/><g fill="none" stroke="#fff" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"><path d="M190 168h134M190 222h134"/><path d="M214 168h24c36 0 58 20 58 54s-22 54-58 54h-44l92 92"/></g></svg>
+      Paisa Vault
+    </div>
+    <h1>Pocket Guide</h1>
+    <p class="sub">What to tap when real life happens: a payment, a bank SMS, a card bill, a lost phone.</p>
+  </div>
+  <div>
+    <div class="box key"><strong class="t">Your app</strong><span class="link">https://dev21-22.github.io/paisa-vault/</span><br><span class="muted">Works offline once installed. Your data stays encrypted on your own devices.</span></div>
+    <div class="box danger"><strong class="t">The one rule</strong>Nobody can recover your master password, not even the app's maker. Write it on paper, keep it safe, and make a backup file every week or two.</div>
+    <p class="foot">Guide for the version released October 2026.</p>
+  </div>
+</div>
+
+<section style="break-before: auto">
+  <h2>Contents</h2>
+  <ul class="toc">
+    <li><b>1</b><span>First-day setup checklist</span></li>
+    <li><b>2</b><span>Everyday money moments</span></li>
+    <li><b>3</b><span>Bank accounts &amp; credit cards</span></li>
+    <li><b>4</b><span>Budgets, bills &amp; planning ahead</span></li>
+    <li><b>5</b><span>Finding things &amp; understanding your spending</span></li>
+    <li><b>6</b><span>Phone, laptop &amp; syncing</span></li>
+    <li><b>7</b><span>Security &amp; emergencies</span></li>
+    <li><b>8</b><span>Quick reference: screens, words, tips</span></li>
+  </ul>
+  <h3>How the app is laid out</h3>
+  <table>
+    <tr><th>Place</th><th>What's there</th></tr>
+    <tr><td><b>Home</b></td><td>This month's spending, budget left, bills due, card dues, 30-day forecast, recent entries.</td></tr>
+    <tr><td><b>History</b></td><td>Every entry, with search and filters.</td></tr>
+    <tr><td><b>+ button</b></td><td>Add an expense, income or transfer. Always in the middle of the bottom bar (bottom-right on a laptop).</td></tr>
+    <tr><td><b>Reports</b></td><td>Charts, spending calendar, insights.</td></tr>
+    <tr><td><b>Accounts</b></td><td>Banks, cards, cash, net worth.</td></tr>
+    <tr><td><b>More</b></td><td>Budgets, Bills &amp; subscriptions, Savings goals, Lent &amp; borrowed, Categories, Backup &amp; sync, Settings.</td></tr>
+    <tr><td><b>👁 / 🔒 (top right)</b></td><td>Blur all amounts / lock the app now.</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>1 · First-day setup checklist</h2>
+  <p>Ten minutes once, and the app does most of the work after that.</p>
+  <ol class="check">
+    <li><b>Create your master password.</b> Use a short sentence, like <i>my-dog-eats-3-mangoes!</i>, and write it on paper.</li>
+    <li><b>Add every bank account.</b> <span class="path">Accounts → Add account</span>. Enter the name, bank, <b>last 4 digits</b> and today's balance. For a bank with a minimum-balance rule, enter it.</li>
+    <li><b>Add each credit card.</b> Type: Credit card. Enter the last 4 digits, the amount owed now, the credit limit, the <b>statement date</b> and the <b>due date</b>.</li>
+    <li><b>Set your Cash balance.</b> Open <b>Cash</b>, then <span class="path">Update balance</span>.</li>
+    <li><b>Salary not on the 1st?</b> <span class="path">More → Settings → Month starts on</span>. Pick your salary day.</li>
+    <li><b>Add fixed bills.</b> <span class="path">More → Bills &amp; subscriptions → Add</span>. Rent, EMIs, phone, OTT, SIPs. Tick <i>Add it automatically</i> for fixed ones like rent or salary.</li>
+    <li><b>Set a monthly budget.</b> <span class="path">More → Budgets</span>, then tap <i>All spending</i>.</li>
+    <li><b>Optional: bring in history.</b> Import last month's bank statement (see section 3).</li>
+    <li><b>Install on phone and laptop</b> (section 6) and make your <b>first backup</b>.</li>
+  </ol>
+  <div class="box key"><strong class="t">Why last 4 digits matter</strong>When you paste a bank SMS like "debited from A/c XX1234", the app picks the right account by itself. With 2–3 banks this saves the most time.</div>
+</section>
+
+<section>
+  <h2>2 · Everyday money moments</h2>
+
+  <div class="sit"><div class="q">"I just paid for something."</div>
+    <div class="a">Tap <span class="path">+</span>, type the amount, tap a category, then <b>Save</b>. The category is often picked for you as you type the note (Swiggy → Food, Uber → Travel).</div>
+    <div class="a muted">Tip: the amount box does maths. Type <b>250+120</b> and it saves ₹370.</div></div>
+
+  <div class="sit"><div class="q">"I got a debit or credit SMS from my bank."</div>
+    <div class="a">Copy the SMS, then tap <span class="path">+ → Paste bank SMS</span>, paste it and tap <b>Fill from SMS</b>. It fills in the amount, merchant, date, expense or income, and the account (from its last 4 digits). Check it, then Save. The SMS text itself is never stored.</div></div>
+
+  <div class="sit"><div class="q">"I buy the same thing again and again."</div>
+    <div class="a">After you've added something twice (tea ₹20, metro ₹40), it appears as a <b>Quick add</b> button at the top of the + screen. One tap fills everything.</div></div>
+
+  <div class="sit"><div class="q">"One bill covers different things." (DMart: groceries + household)</div>
+    <div class="a">In the + screen, tap <span class="path">Split across categories</span>. Add a row per category and give each an amount. The app shows what's left to assign until it adds up.</div></div>
+
+  <div class="sit"><div class="q">"I withdrew cash from an ATM."</div>
+    <div class="a">This isn't spending, just moving money. Tap <span class="path">+ → Transfer</span>, choose From: <i>your bank</i> and To: <i>Cash</i>. When you spend that cash later, add those expenses from <b>Cash</b>. Statement imports do this for you.</div></div>
+
+  <div class="sit"><div class="q">"I moved money between my own accounts / topped up a wallet / paid my card bill."</div>
+    <div class="a">Always use <b>Transfer</b>. Transfers never count as income or spending, so your reports stay correct.</div></div>
+
+  <div class="sit"><div class="q">"My salary came in."</div>
+    <div class="a"><span class="path">+ → Income → Salary</span>, received in your salary account. Better: set it up once in <span class="path">Bills &amp; subscriptions</span> as <b>Income</b> with <i>Add automatically</i>.</div></div>
+
+  <div class="sit"><div class="q">"I got a refund or cashback."</div>
+    <div class="a">Add it as <b>Income</b> with the category <i>Interest &amp; returns</i>, or as an income in the original category if you prefer.</div></div>
+
+  <div class="sit"><div class="q">"I lent money to a friend." / "I borrowed from family."</div>
+    <div class="a"><span class="path">More → Lent &amp; borrowed → Add</span>. When they pay back, even in parts, tap <b>Repayment</b>. The top shows <i>Others owe you</i> and <i>You owe</i>.</div></div>
+
+  <div class="sit"><div class="q">"I entered something wrong."</div>
+    <div class="a">Tap the entry anywhere (Home, History, an account) to edit it, or tap <b>Delete</b>. A deleted entry can be brought back with <b>Undo</b> for a few seconds.</div></div>
+
+  <div class="sit"><div class="q">"I want to group spending for a trip or event."</div>
+    <div class="a">Add a <b>tag</b> like <i>goa-trip</i> to each entry. Search <b>#goa-trip</b> in History to see them all, and check <span class="path">Reports → By tag</span> for the total.</div></div>
+</section>
+
+<section>
+  <h2>3 · Bank accounts &amp; credit cards</h2>
+
+  <div class="sit"><div class="q">"The app's balance doesn't match my bank."</div>
+    <div class="a">Open the account, tap <span class="path">Update balance</span> and type what your bank app shows. The app adds a <b>balance correction</b> for the difference. Corrections don't count as spending or income. Do this monthly for each account.</div></div>
+
+  <div class="sit"><div class="q">"I don't want to type months of old transactions."</div>
+    <ol>
+      <li>In your bank's net banking, download the <b>statement as CSV</b>. If you only get Excel, open it and <i>Save as → CSV</i>.</li>
+      <li><span class="path">Accounts → Import statement</span>. Pick the account, then choose the file.</li>
+      <li>Check the list. Categories are pre-filled, entries you already have are unticked, and ATM withdrawals become transfers to Cash.</li>
+      <li>Tap <b>Import</b>. Importing the same file twice is safe; duplicates are detected.</li>
+    </ol></div>
+
+  <div class="sit"><div class="q">"When is my credit card bill due, and how much?"</div>
+    <div class="a">Open the card in <b>Accounts</b>:</div>
+    <ul>
+      <li><b>Bill due:</b> the amount from the last statement still unpaid, and its due date.</li>
+      <li><b>Unbilled:</b> spent since the last statement; it goes on the next bill.</li>
+      <li><b>Limit used:</b> stay under 30% for a healthier credit score.</li>
+    </ul>
+    <div class="a">Home shows a reminder 7 days before the due date. Tap <b>Pay</b> or <span class="path">Pay card bill</span> to record the payment as a transfer from your bank.</div></div>
+
+  <div class="sit"><div class="q">"I spent on my credit card."</div>
+    <div class="a">Add a normal <b>Expense</b> with <i>Paid from</i> set to the card. It counts as spending now. Paying the bill later is a transfer, so nothing is counted twice.</div></div>
+
+  <div class="sit"><div class="q">"My bank charges a fee if I go below the minimum balance."</div>
+    <div class="a">Edit the account and set <b>Minimum balance</b>. If the balance drops below it, a red alert appears on Home.</div></div>
+
+  <div class="sit"><div class="q">"How much am I really worth?"</div>
+    <div class="a"><b>Accounts</b> shows <b>Net worth</b> (what you own minus card and loan dues) with a 12-month chart. To leave an account out, such as a joint account, untick <i>Count in net worth</i>.</div></div>
+
+  <div class="sit"><div class="q">"I closed a bank account."</div>
+    <div class="a">Edit it and tick <b>Account closed</b>. It disappears from pickers but its history stays in your reports.</div></div>
+
+  <div class="box key"><strong class="t">Account types</strong>
+    Bank account · Credit card · Cash · UPI / wallet · Loan · Investment / FD · Other. Credit cards and loans count as money you <i>owe</i>.</div>
+</section>
+
+<section>
+  <h2>4 · Budgets, bills &amp; planning ahead</h2>
+
+  <div class="sit"><div class="q">"I want to control my spending this month."</div>
+    <div class="a"><span class="path">More → Budgets</span>. Set <i>All spending</i> and any category limits. Then:</div>
+    <ul>
+      <li>Home shows <b>money left</b> and how much you can <b>safely spend per day</b>.</li>
+      <li>From day 5, a <b>pace warning</b> appears if you're heading over budget.</li>
+      <li>Categories at 80% or more appear under <b>Budget alerts</b>.</li>
+      <li>Tick <b>Roll over</b> to carry unspent money into next month's limit.</li>
+    </ul></div>
+
+  <div class="sit"><div class="q">"I have rent, EMI, phone and OTT bills every month."</div>
+    <div class="a"><span class="path">More → Bills &amp; subscriptions → Add</span>. For each one, choose:</div>
+    <ul>
+      <li><b>Reminder:</b> it appears on Home 7 days early. Tap <b>Mark paid</b> when you pay.</li>
+      <li><b>Add automatically:</b> recorded by itself on the due date. Good for fixed amounts like rent or salary.</li>
+    </ul>
+    <div class="a">The top shows your fixed costs per month and per year.</div></div>
+
+  <div class="sit"><div class="q">"I forgot to add a subscription."</div>
+    <div class="a">The app notices payments that repeat (same name, similar amount, regular gap) and shows <b>Looks like a regular payment</b> on Home. Tap <b>Track</b> to add it, or ✕ to ignore it.</div></div>
+
+  <div class="sit"><div class="q">"Will my money last until salary day?"</div>
+    <div class="a">Home → <b>Next 30 days</b> lists what's coming in and going out from your bills and regular income, and the cash left afterwards. A red warning shows the date your bank and cash balance could go below zero.</div></div>
+
+  <div class="sit"><div class="q">"I'm saving for a phone, a trip or an emergency fund."</div>
+    <div class="a"><span class="path">More → Savings goals → New goal</span>. Set a target and date, and the app tells you how much to save each month. Tap <b>Add money</b> whenever you put some aside.</div></div>
+
+  <div class="sit"><div class="q">"My salary comes on the 25th, so calendar months don't make sense."</div>
+    <div class="a"><span class="path">Settings → Month starts on → 25th</span>. Every screen then uses 25th-to-24th periods.</div></div>
+</section>
+
+<section>
+  <h2>5 · Finding things &amp; understanding spending</h2>
+
+  <div class="sit"><div class="q">"Where did I pay that ₹1,299?"</div>
+    <div class="a"><b>History</b> → search. You can search for:</div>
+    <ul>
+      <li>words: <i>amazon</i>, <i>petrol</i></li>
+      <li>amounts: <i>1299</i></li>
+      <li>tags: <i>#office</i></li>
+      <li>a category name</li>
+    </ul>
+    <div class="a">Switch between <b>Month</b> and <b>All time</b>. Open <b>Filters</b> for type, category, account and minimum/maximum amount.</div></div>
+
+  <div class="sit"><div class="q">"Where is my money going?"</div>
+    <div class="a"><b>Reports</b> for any month (use the arrows):</div>
+    <ul>
+      <li><b>Spending by category:</b> tap a row to see those entries.</li>
+      <li><b>Insights:</b> change vs last month, savings rate, biggest increase, largest expense, and the weekday you spend most.</li>
+      <li><b>Daily spending:</b> the dashed line is your daily average.</li>
+      <li><b>Last 6 months:</b> income vs spending.</li>
+      <li><b>Spending calendar:</b> darker days mean more spending, plus a count of no-spend days.</li>
+      <li><b>Spending by account</b> and <b>By tag</b>.</li>
+    </ul></div>
+
+  <div class="sit"><div class="q">"The app keeps picking the wrong category for a shop."</div>
+    <div class="a"><span class="path">More → Categories → Add rule</span>. For example, <i>contains "milkman"</i> → Groceries. Tick <i>re-categorise past entries</i> to fix old ones too.</div></div>
+
+  <div class="sit"><div class="q">"I need the data in Excel for taxes or a CA."</div>
+    <div class="a"><span class="path">More → Backup &amp; sync → Export CSV</span>. <b>This file is not encrypted.</b> Delete it once you're done.</div></div>
+
+  <div class="sit"><div class="q">"I want my own categories."</div>
+    <div class="a"><span class="path">More → Categories</span>. Add, rename, or pick an icon and colour. Deleting a category moves its entries to <i>Other</i>.</div></div>
+</section>
+
+<section>
+  <h2>6 · Phone, laptop &amp; syncing</h2>
+
+  <h3>Install</h3>
+  <table>
+    <tr><th>Device</th><th>Steps</th></tr>
+    <tr><td>Android</td><td>Open the link in Chrome, tap ⋮, then <b>Install app</b> / <b>Add to Home screen</b>.</td></tr>
+    <tr><td>iPhone</td><td>Open the link in Safari, tap Share, then <b>Add to Home Screen</b>.</td></tr>
+    <tr><td>Laptop</td><td>Open the link in Chrome or Edge, then click the install icon in the address bar.</td></tr>
+  </table>
+
+  <div class="sit"><div class="q">"I added entries on my phone; I want them on my laptop."</div>
+    <ol>
+      <li>Phone: <span class="path">More → Backup &amp; sync → Create backup file</span>. Enter your password, then share the file to yourself (WhatsApp, Drive or email).</li>
+      <li>Laptop: download the file, then <span class="path">Backup &amp; sync → Open a backup file</span>. Enter the password it was made with and choose <b>Merge</b>.</li>
+    </ol>
+    <div class="a muted">Merge adds what's missing and never removes anything. Accounts and categories with the same name are joined, not duplicated. Deletions don't carry over; use <b>Replace</b> for an exact copy.</div></div>
+
+  <div class="sit"><div class="q">"I got a new phone."</div>
+    <div class="a">Install the app on the new phone. On the first screen, tap <b>Restore from a backup file</b> and enter that backup's password.</div></div>
+
+  <div class="sit"><div class="q">"How do I get app updates?"</div>
+    <div class="a">Nothing to do. Open the app while online and it updates itself. If it looks unchanged, close it fully and open it again.</div></div>
+
+  <div class="box warn"><strong class="t">Good habit</strong>Make a backup every 1–2 weeks and keep the latest file in two places, such as Google Drive and your laptop. Home reminds you after 14 days without one.</div>
+</section>
+
+<section>
+  <h2>7 · Security &amp; emergencies</h2>
+
+  <div class="sit"><div class="q">"Someone is looking at my screen."</div>
+    <div class="a">Tap <b>👁</b> at the top to blur every amount; hold an amount to peek. Tap <b>🔒</b> to lock instantly.</div></div>
+
+  <div class="sit"><div class="q">"I want it to lock faster."</div>
+    <div class="a"><span class="path">Settings → Auto-lock after</span> (1–30 minutes). Also tick <i>Lock as soon as I switch to another app</i>. The app always locks when reopened or reloaded.</div></div>
+
+  <div class="sit"><div class="q">"My phone was lost or stolen."</div>
+    <div class="a">Your data on it is encrypted, so without your master password it's unreadable. Restore your latest backup on a new device (section 6). If you think someone saw your password, restore on the new device and then <span class="path">Settings → Change master password</span>.</div></div>
+
+  <div class="sit"><div class="q">"I forgot my master password."</div>
+    <div class="a">It can't be recovered. On the unlock screen, tap <b>Forgot password?</b> to erase the vault. Then restore a backup file, using the password that backup was made with, or start fresh.</div></div>
+
+  <div class="sit"><div class="q">"Too many wrong passwords."</div>
+    <div class="a">After 3 wrong tries the app makes you wait a few seconds, and the wait doubles each time. This slows down anyone guessing.</div></div>
+
+  <div class="grid2">
+    <div class="box key"><strong class="t">Protected</strong>All data is encrypted with AES-256 on your device. Nothing is sent to any server. There are no ads or trackers. Backup files are encrypted.</div>
+    <div class="box warn"><strong class="t">Not protected</strong>Someone using your phone while the app is unlocked, malware on your phone, and CSV exports, which are plain text.</div>
+  </div>
+</section>
+
+<section>
+  <h2>8 · Quick reference</h2>
+  <h3>Words used in the app</h3>
+  <table>
+    <tr><td><b>Transfer</b></td><td>Money moving between your own accounts (ATM, card bill, wallet top-up). Not spending.</td></tr>
+    <tr><td><b>Balance correction</b></td><td>Added by <i>Update balance</i> so the app matches your bank. Not spending.</td></tr>
+    <tr><td><b>Split</b></td><td>One payment divided across several categories.</td></tr>
+    <tr><td><b>Unbilled</b></td><td>Card spending since the last statement date.</td></tr>
+    <tr><td><b>Limit used</b></td><td>Card amount owed ÷ credit limit.</td></tr>
+    <tr><td><b>Net worth</b></td><td>Everything you own minus card and loan dues.</td></tr>
+    <tr><td><b>Rollover</b></td><td>Unspent budget added to next month's limit.</td></tr>
+    <tr><td><b>Safe to spend / day</b></td><td>Budget left ÷ days left in the month.</td></tr>
+    <tr><td><b>Month starts on</b></td><td>The day your budget month begins, such as salary day.</td></tr>
+    <tr><td><b>Merge / Replace</b></td><td>Backup options: add what's missing, or make an exact copy.</td></tr>
+  </table>
+
+  <h3>Handy tricks</h3>
+  <ul>
+    <li>Type sums in any amount box: <b>1200/3</b>, <b>450+120+80</b>.</li>
+    <li><b>Save &amp; add another</b> keeps the account and date for fast entry.</li>
+    <li>In Reports, tap a category to see its entries.</li>
+    <li>Tap a bill on Home to jump to its account; tap <b>Net worth</b> to open Accounts.</li>
+    <li>Features you don't use can be switched off in <span class="path">Settings → Features</span>. Their data is kept.</li>
+  </ul>
+
+  <div class="box key"><strong class="t">Want a change?</strong>Ask Claude to add, change or remove any feature. The app is built so each feature is a separate part, and updates reach your phone automatically.</div>
+</section>
+
+</body>
+</html>

@@ -221,7 +221,7 @@ function renderShell() {
     <button type="button" class="fab" id="fab" aria-label="Add transaction">${icon('plus', 26)}</button>
     <nav class="bottombar" aria-label="Main">
       ${main.slice(0, 2).map((f) => navLink(f, true)).join('')}
-      <span class="bottombar-gap" aria-hidden="true"></span>
+      <span class="bottombar-gap"><button type="button" class="fab-inline" id="fab2" aria-label="Add transaction">${icon('plus', 26)}</button></span>
       ${main.slice(2).map((f) => navLink(f, true)).join('')}
       <a href="#more" class="nav-link" data-route="more">${icon('more')}<span>More</span></a>
     </nav>
@@ -229,6 +229,7 @@ function renderShell() {
 
   $$('[data-route]').forEach((a) => (a.onclick = (e) => { e.preventDefault(); go(a.dataset.route); }));
   $('#fab').onclick = () => openTxnForm();
+  $('#fab2').onclick = () => openTxnForm();
   $('#btn-lock').onclick = lock;
   $('#btn-hide').onclick = () => {
     store.state.settings.hideAmounts = !store.state.settings.hideAmounts;

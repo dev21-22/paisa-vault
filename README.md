@@ -37,6 +37,12 @@ A private, encrypted expense tracker for your phone and laptop. It is free, work
 - Salary-cycle month (it can start on any day), Indian ₹ formatting, hide-amounts mode, and light/dark themes.
 - Installs as an app on phone and laptop and works offline.
 
+## Design
+"Midnight Glass": frosted-glass cards over a soft aurora background, a bento-grid Home, a floating tab bar and bold rounded numerals (Bricolage Grotesque + Geist, bundled with the app). Pearl-light and midnight-dark themes follow your device, or pick one in Settings.
+
+## Pocket guide
+A 12-page PDF of what to do in real situations: `guide/Paisa-Vault-Guide.pdf`. It's also linked from **Settings → Help** in the app.
+
 ## Security
 
 | What | How |

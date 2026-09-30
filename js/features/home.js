@@ -14,6 +14,10 @@ export function render(root, ctx) {
   const cats = catMap(state);
 
   const todaySpent = totals(state.txns.filter((t) => t.date === today)).expense;
+  const todayCount = state.txns.filter((t) => t.date === today && t.type === 'expense').length;
+  // Compare with the same number of days into last month, not the whole month.
+  const prevP = currentPeriod(state, -1);
+  const lastPeriodExpense = totals(inRange(state.txns, { start: prevP.start, end: addDays(prevP.start, daysBetween(period.start, today)) })).expense;
   const weekStart = addDays(today, -((parseISO(today).getDay() + 6) % 7));
   const weekSpent = totals(inRange(state.txns, { start: weekStart, end: today })).expense;
 
@@ -22,17 +26,35 @@ export function render(root, ctx) {
   const totalBudget = tb.total;
   const pace = spendingPace(state, today);
 
-  let budgetCard = '';
+  let budgetTile = isOn(state, 'budgets') ? `
+      <div class="card tile span-2 span-2-lg budget-cta">
+        <span class="label">Monthly budget</span>
+        <span class="tile-foot">Set a limit to see what's safe to spend each day and get warned before you overspend.</span>
+        <button type="button" class="btn btn-small" id="set-budget">Set a budget</button>
+      </div>` : '';
   if (totalBudget) {
     const left = totalBudget - tot.expense;
     const perDay = left > 0 ? Math.floor(left / Math.max(daysLeft, 1) / 100) * 100 : 0; // whole rupees
-    budgetCard = `
-      <div class="card">
-        <div class="row-between"><span class="label">Monthly budget</span><span class="muted small">${daysLeft} day${daysLeft === 1 ? '' : 's'} left</span></div>
-        <div class="big-num">${money(left, { cls: left < 0 ? 'neg' : '' })} <span class="muted small">${left < 0 ? 'over budget' : 'left'}</span></div>
-        ${progress(tot.expense, totalBudget)}
-        <p class="muted small">${left > 0 ? `You can spend about <strong>${money(perDay)}</strong> a day and stay within budget.` : 'You have gone over this month\'s budget.'}${tb.carry ? ` Includes ${money(tb.carry)} carried over from last month.` : ''}</p>
-        ${pace && pace.projected > totalBudget && left > 0 ? `<p class="small neg">At your current pace you'll spend about ${money(pace.projected)} this month, ${money(pace.projected - totalBudget)} over budget.</p>` : ''}
+    const used = Math.min(1, tot.expense / totalBudget);
+    const r = 27;
+    const C = 2 * Math.PI * r;
+    const ringColor = used >= 1 ? 'var(--neg)' : used >= 0.8 ? 'var(--warn)' : 'var(--pos)';
+    budgetTile = `
+      <div class="card tile span-2 span-2-lg">
+        <div class="ring-tile">
+          <svg class="ring" width="68" height="68" viewBox="0 0 68 68" aria-hidden="true">
+            <circle class="track" cx="34" cy="34" r="${r}" fill="none" stroke-width="8"/>
+            <circle cx="34" cy="34" r="${r}" fill="none" stroke="${ringColor}" stroke-width="8" stroke-linecap="round"
+              stroke-dasharray="${(used * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 34 34)"/>
+            <text x="34" y="39" text-anchor="middle" class="ring-label">${Math.round((tot.expense / totalBudget) * 100)}%</text>
+          </svg>
+          <div class="grow">
+            <span class="label">Budget left · ${daysLeft} day${daysLeft === 1 ? '' : 's'} to go</span>
+            <span class="num">${money(left, { cls: left < 0 ? 'neg' : '' })}</span>
+            <p class="tile-foot">${left > 0 ? `About <strong>${money(perDay)}</strong> a day is safe to spend.` : 'You have gone over this month\'s budget.'}${tb.carry ? ` Includes ${money(tb.carry)} rolled over.` : ''}</p>
+          </div>
+        </div>
+        ${pace && pace.projected > totalBudget && left > 0 ? `<p class="small neg">At this pace you'll spend about ${money(pace.projected)}, which is ${money(pace.projected - totalBudget)} over budget.</p>` : ''}
       </div>`;
   }
 
@@ -65,25 +87,33 @@ export function render(root, ctx) {
 
   root.innerHTML = `
   <div class="stack">
-    <p class="greet">${greet}${state.settings.name ? `, ${esc(state.settings.name)}` : ''} · <span class="muted">${esc(periodLabel(period))}</span></p>
+    <p class="greet">${greet}${state.settings.name ? `, <strong>${esc(state.settings.name)}</strong>` : ''} · ${esc(periodLabel(period))}</p>
 
-    <div class="summary">
-      <div class="sum-main">
-        <span class="label">Spent this month</span>
-        <span class="hero-num">${money(tot.expense)}</span>
+    <div class="bento">
+      <div class="hero span-2">
+        <div>
+          <span class="label">Spent this month</span>
+          <span class="hero-num">${money(tot.expense)}</span>
+        </div>
+        <div class="hero-sub">
+          <div><span class="label">Income</span><span class="num pos">${money(tot.income)}</span></div>
+          <div><span class="label">Saved</span><span class="num ${tot.net < 0 ? 'neg' : ''}">${money(tot.net)}</span></div>
+          ${lastPeriodExpense ? `<div><span class="label">vs same point last month</span><span class="num ${tot.expense > lastPeriodExpense ? 'neg' : 'pos'}">${tot.expense > lastPeriodExpense ? '▲' : '▼'} ${Math.abs(Math.round(((tot.expense - lastPeriodExpense) / lastPeriodExpense) * 100))}%</span></div>` : ''}
+        </div>
       </div>
-      <div class="sum-grid">
-        <div><span class="label">Income</span><span class="num pos">${money(tot.income)}</span></div>
-        <div><span class="label">Saved</span><span class="num ${tot.net < 0 ? 'neg' : ''}">${money(tot.net)}</span></div>
-        <div><span class="label">Today</span><span class="num">${money(todaySpent)}</span></div>
-        <div><span class="label">This week</span><span class="num">${money(weekSpent)}</span></div>
-      </div>
+      <div class="card tile"><span class="label">Today</span><span class="num">${money(todaySpent)}</span><span class="tile-foot">${todayCount} entr${todayCount === 1 ? 'y' : 'ies'}</span></div>
+      <div class="card tile"><span class="label">This week</span><span class="num">${money(weekSpent)}</span><span class="tile-foot">since Monday</span></div>
+      ${budgetTile}
+      ${nw ? `<button type="button" class="card tile nw-card span-2 span-2-lg" id="go-accounts">
+        <span class="label">Net worth</span>
+        <span class="num">${money(nw.net, { cls: nw.net < 0 ? 'neg' : '' })}</span>
+        <span class="tile-foot">Own ${money(nw.assets)} · Owe ${money(nw.liabilities)}</span>
+      </button>` : ''}
     </div>
 
     ${backupDue ? `<div class="notice">${icon('shield', 18)}<span>You haven't made a backup in a while. If this phone is lost, a backup is the only way to get your data back.</span><button type="button" class="btn btn-small" id="go-backup">Back up now</button></div>` : ''}
 
-    ${budgetCard}
-
+    <div class="home-cols"><div class="col">
     ${cardDues.length || lowBal.length ? `<div class="card attention">
       <h2 class="card-title">${icon('bell', 18)} Needs attention</h2>
       <div class="bill-list">
@@ -138,10 +168,7 @@ export function render(root, ctx) {
       <p class="muted small">Tracking it adds a reminder before each payment and includes it in your forecast.</p>
     </div>` : ''}
 
-    ${nw ? `<button type="button" class="card nw-card" id="go-accounts">
-      <span><span class="label">Net worth</span><span class="num">${money(nw.net, { cls: nw.net < 0 ? 'neg' : '' })}</span></span>
-      <span class="muted small">Own ${money(nw.assets)} · Owe ${money(nw.liabilities)}</span>
-    </button>` : ''}
+    </div><div class="col">
 
     <div class="card">
       <div class="row-between"><h2 class="card-title">Where it went</h2>${isOn(state, 'reports') ? '<button type="button" class="btn-link" id="go-reports">See reports</button>' : ''}</div>
@@ -157,6 +184,7 @@ export function render(root, ctx) {
       <div class="row-between"><h2 class="card-title">Recent</h2><button type="button" class="btn-link" id="go-all">See all</button></div>
       ${recent.length ? txnGroups(state, recent) : emptyState('No transactions yet', 'Tap the + button to add your first expense. It takes about three taps.', '<button type="button" class="btn btn-primary" id="first-add">Add an expense</button>')}
     </div>
+    </div></div>
   </div>`;
 
   bindTxnClicks(root, state, ctx.openTxnForm);
@@ -165,6 +193,11 @@ export function render(root, ctx) {
   $('#go-backup', root)?.addEventListener('click', () => ctx.go('backup'));
   $('#first-add', root)?.addEventListener('click', () => ctx.openTxnForm());
   $('#go-accounts', root)?.addEventListener('click', () => ctx.go('accounts'));
+  $('#set-budget', root)?.addEventListener('click', () => ctx.go('budgets'));
+  // With nothing in the left column, let the right one take the full width.
+  const cols = root.querySelectorAll('.home-cols > .col');
+  cols.forEach((c) => { if (!c.children.length) c.remove(); });
+  if (root.querySelectorAll('.home-cols > .col').length < 2) root.querySelector('.home-cols')?.classList.add('one-col');
   $$('[data-acc]', root).forEach((b) => (b.onclick = () => ctx.go('accounts', { id: b.dataset.acc })));
   $$('[data-paycard]', root).forEach((b) => (b.onclick = () => {
     const card = state.accounts.find((a) => a.id === b.dataset.paycard);

@@ -214,15 +214,17 @@ export function lineChart(points, { height = 140, labelEvery = 1, color = 'var(-
   const y = (v) => top + (H - top - bottom) * (1 - (v - min) / (max - min));
   const line = points.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.value).toFixed(1)}`).join(' ');
   const area = `${line} L${x(points.length - 1).toFixed(1)},${y(Math.max(min, 0)).toFixed(1)} L${x(0).toFixed(1)},${y(Math.max(min, 0)).toFixed(1)} Z`;
-  const last = points[points.length - 1];
+  const lastPt = points[points.length - 1];
   // Labels are HTML under the chart so they don't stretch with it.
-  const labels = points.map((p, i) => ((i % labelEvery === 0 || i === points.length - 1) && p.label
+  const last = points.length - 1;
+  // Skip a regular label that would sit right next to the final one.
+  const labels = points.map((p, i) => (((i % labelEvery === 0 && last - i >= labelEvery) || i === last) && p.label
     ? `<span style="left:${((x(i) / W) * 100).toFixed(2)}%">${esc(p.label)}</span>` : '')).join('');
   return `<div class="line-wrap"><svg class="line-chart" style="height:${H - bottom + 2}px" viewBox="0 0 ${W} ${H - bottom + 2}" preserveAspectRatio="none" role="img">
     ${min < 0 ? `<line x1="0" x2="${W}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" class="avg-line"/>` : ''}
     <line x1="0" x2="${W}" y1="${H - bottom}" y2="${H - bottom}" class="base-line"/>
     <path d="${area}" fill="${color}" opacity="0.12"/>
     <path d="${line}" fill="none" stroke="${color}" stroke-width="2.2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
-  </svg><span class="line-dot" style="left:${((x(points.length - 1) / W) * 100).toFixed(2)}%;top:${y(last.value).toFixed(1)}px;background:${color}"></span>
+  </svg><span class="line-dot" style="left:${((x(points.length - 1) / W) * 100).toFixed(2)}%;top:${y(lastPt.value).toFixed(1)}px;background:${color}"></span>
   <div class="line-labels">${labels}</div></div>`;
 }
