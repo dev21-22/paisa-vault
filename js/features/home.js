@@ -4,6 +4,7 @@ import { iso, addDays, daysBetween, periodLabel, prettyDate, parseISO } from '..
 import { txnGroups, bindTxnClicks } from '../components.js';
 import { isOn } from '../features.js';
 import { save, addTxnFromRecurring, uid } from '../store.js';
+import { balances as friendBalances, totalsOwed } from '../lib/split.js';
 
 export function render(root, ctx) {
   const { state } = ctx;
@@ -75,6 +76,11 @@ export function render(root, ctx) {
   const subs = isOn(state, 'recurring') ? detectSubscriptions(state, today).slice(0, 3) : [];
   const nw = accOn && state.accounts.filter((a) => !a.archived).length > 1 ? netWorth(state) : null;
 
+  const fb = isOn(state, 'friends') ? friendBalances(state) : {};
+  const fOwed = totalsOwed(fb);
+  const fTop = Object.entries(fb).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 3)
+    .map(([id, v]) => ({ p: state.people.find((x) => x.id === id), v })).filter((x) => x.p);
+
   const top = byCategory(ptx).slice(0, 5);
   const topMax = top[0]?.amount || 1;
 
@@ -125,6 +131,17 @@ export function render(root, ctx) {
           <button type="button" class="bill-main as-link" data-acc="${esc(a.id)}"><strong>${esc(a.name)}</strong><span class="muted small">Below minimum balance of ${money(a.minBalance)}</span></button>
           <span class="neg">${money(bal[a.id])}</span><span></span></div>`).join('')}
       </div></div>` : ''}
+
+    ${fTop.length ? `<div class="card">
+      <div class="row-between"><h2 class="card-title">${icon('people', 18)} Friends</h2><button type="button" class="btn-link" id="go-friends">Open</button></div>
+      <div class="kpis kpis-2 kpis-flat">
+        <div><span class="label">Owed to you</span><span class="num pos">${money(fOwed.owedToYou)}</span></div>
+        <div><span class="label">You owe</span><span class="num ${fOwed.youOwe ? 'neg' : ''}">${money(fOwed.youOwe)}</span></div>
+      </div>
+      <div class="bill-list">${fTop.map(({ p, v }) => `<div class="bill">
+        <button type="button" class="bill-main as-link" data-friend="${esc(p.id)}"><strong>${esc(p.name)}</strong><span class="small ${v > 0 ? 'pos' : 'neg'}">${v > 0 ? 'owes you' : 'you owe'}</span></button>
+        <span>${money(Math.abs(v))}</span><span></span></div>`).join('')}</div>
+    </div>` : ''}
 
     ${bills.length ? `<div class="card">
       <h2 class="card-title">${icon('bell', 18)} Bills due soon</h2>
@@ -194,6 +211,8 @@ export function render(root, ctx) {
   $('#first-add', root)?.addEventListener('click', () => ctx.openTxnForm());
   $('#go-accounts', root)?.addEventListener('click', () => ctx.go('accounts'));
   $('#set-budget', root)?.addEventListener('click', () => ctx.go('budgets'));
+  $('#go-friends', root)?.addEventListener('click', () => ctx.go('friends'));
+  $$('[data-friend]', root).forEach((b) => (b.onclick = () => ctx.go('friends', { person: b.dataset.friend })));
   // With nothing in the left column, let the right one take the full width.
   const cols = root.querySelectorAll('.home-cols > .col');
   cols.forEach((c) => { if (!c.children.length) c.remove(); });

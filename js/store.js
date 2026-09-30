@@ -59,6 +59,7 @@ export function defaultState() {
       hideAmounts: false,
       theme: 'system',
       lastBackup: null,
+      upiId: '',
     },
     features: defaultFeatureState(),
     // { id, name, type: cash|bank|upi|card|loan|investment|other, opening(paise), bank, last4, color,
@@ -97,6 +98,11 @@ export function defaultState() {
     rules: [],      // { id, match, categoryId }  "if note contains X, use category Y"
     budgetRollover: {}, // { [categoryId | '_total']: true } carry unspent money into next period
     dismissedSuggestions: [], // subscription suggestions the user said no to
+    // Splitting bills with friends. 'me' stands for you in paidBy / shares.
+    people: [],      // { id, name, phone }
+    groups: [],      // { id, name, icon, memberIds[], archived }
+    shared: [],      // { id, groupId, desc, amount, date, paidBy, mode, input, shares: { me|personId: paise }, categoryId, accountId, txnId, created }
+    settlements: [], // { id, personId, direction: in (they paid you) | out (you paid them), amount, date, accountId, groupId, txnId, note, created }
   };
 }
 
@@ -105,7 +111,7 @@ function migrate(s) {
   const d = defaultState();
   s.settings = { ...d.settings, ...s.settings };
   s.features = { ...d.features, ...s.features };
-  for (const k of ['accounts', 'categories', 'txns', 'recurring', 'goals', 'debts', 'rules', 'dismissedSuggestions']) s[k] ??= d[k];
+  for (const k of ['accounts', 'categories', 'txns', 'recurring', 'goals', 'debts', 'rules', 'dismissedSuggestions', 'people', 'groups', 'shared', 'settlements']) s[k] ??= d[k];
   s.budgets ??= {};
   s.budgetRollover ??= {};
   const colors = ['#3F7AE0', '#2E9E63', '#8C6BD1', '#E07A3F', '#D4A017', '#1F7A8C', '#C850C0'];

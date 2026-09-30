@@ -52,6 +52,7 @@ const P = {
   upload: 'M12 21V9m0 0-4 4m4-4 4 4M4 3h16',
   check: 'M5 12l5 5 9-10',
   bell: 'M6 16V11a6 6 0 0 1 12 0v5l2 2H4l2-2Zm4 4h4',
+  hand: 'M7 11V6a2 2 0 0 1 4 0v5m0-1V4a2 2 0 0 1 4 0v6m0-1a2 2 0 0 1 4 0v5a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3l-3-5a2 2 0 0 1 3-2l2 2',
 };
 
 export function icon(name, size = 20) {

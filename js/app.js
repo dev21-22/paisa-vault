@@ -4,6 +4,7 @@ import * as store from './store.js';
 import { FEATURES, enabledFeatures, loadFeature, isOn } from './features.js';
 import { $, $$, esc, icon, toast, closeSheet, confirmSheet, lockGuard } from './ui.js';
 import { openTxnForm, setTxnChangeHandler } from './txn-form.js';
+import { setShareChangeHandler } from './share-form.js';
 import { passwordStrength, openBackup } from './lib/crypto.js';
 
 const root = $('#root');
@@ -185,6 +186,7 @@ function startApp() {
   applyTheme();
   renderShell();
   setTxnChangeHandler(() => refresh());
+  setShareChangeHandler(() => refresh());
   const fromHash = location.hash.replace('#', '');
   go(FEATURES.some((f) => f.id === fromHash) || fromHash === 'more' ? fromHash : 'home');
   startAutoLock();

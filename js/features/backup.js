@@ -1,7 +1,7 @@
 import { esc, icon, openSheet, closeSheet, toast, downloadFile, pickFile, $ } from '../ui.js';
 import { makeBackup, openBackup } from '../lib/crypto.js';
 import { verifyPassword, replaceState, flush } from '../store.js';
-import { catMap, accMap } from '../calc.js';
+import { catMap, accMap, parts } from '../calc.js';
 import { iso, prettyDate } from '../lib/dates.js';
 import { openStatementImport } from '../import-statement.js';
 
@@ -136,7 +136,7 @@ export function merge(into, from) {
   let added = 0;
   const remap = {};
   const key = (x, kindField) => `${(x.name || '').trim().toLowerCase()}|${x[kindField] || ''}`;
-  for (const [k, kindField] of [['accounts', 'type'], ['categories', 'kind']]) {
+  for (const [k, kindField] of [['accounts', 'type'], ['categories', 'kind'], ['people', '_']]) {
     into[k] ??= [];
     const byId = new Set(into[k].map((x) => x.id));
     const byName = new Map(into[k].map((x) => [key(x, kindField), x.id]));
@@ -154,11 +154,20 @@ export function merge(into, from) {
     if (y.splits) y.splits = y.splits.map((p) => ({ ...p, categoryId: fix(p.categoryId) }));
     return y;
   };
-  for (const k of ['txns', 'recurring', 'goals', 'debts', 'rules']) {
+  const fixShared = (x) => {
+    const y = fixItem(x);
+    if (y.paidBy) y.paidBy = fix(y.paidBy);
+    if (y.personId) y.personId = fix(y.personId);
+    if (y.memberIds) y.memberIds = y.memberIds.map(fix);
+    if (y.shares) y.shares = Object.fromEntries(Object.entries(y.shares).map(([id, v]) => [fix(id), v]));
+    if (y.input) y.input = Object.fromEntries(Object.entries(y.input).map(([id, v]) => [fix(id), v]));
+    return y;
+  };
+  for (const k of ['txns', 'recurring', 'goals', 'debts', 'rules', 'groups', 'shared', 'settlements']) {
     into[k] ??= [];
     const have = new Set(into[k].map((x) => x.id));
     for (const item of from[k] || []) {
-      if (!have.has(item.id)) { into[k].push(fixItem(item)); added++; }
+      if (!have.has(item.id)) { into[k].push(fixShared(item)); added++; }
     }
   }
   for (const [k, v] of Object.entries(from.budgets || {})) if (!(fix(k) in into.budgets)) into.budgets[fix(k)] = v;
@@ -177,7 +186,8 @@ function exportCSV(state) {
   };
   const rows = [['Date', 'Type', 'Amount (INR)', 'Category', 'Account', 'To account', 'Note', 'Tags']];
   [...state.txns].sort((a, b) => (a.date < b.date ? -1 : 1)).forEach((t) => {
-    const ps = t.splits?.length ? t.splits : [{ categoryId: t.categoryId, amount: t.amount }];
+    // Split bills export only your share; the rest is money friends owe you.
+    const ps = t.type === 'expense' ? parts(t) : [{ categoryId: t.categoryId, amount: t.amount }];
     // A split transaction becomes one row per category so spreadsheet totals stay right.
     ps.forEach((p) => rows.push([
       t.date, t.type, (p.amount / 100).toFixed(2), cats[p.categoryId]?.name || '', accs[t.accountId]?.name || '',

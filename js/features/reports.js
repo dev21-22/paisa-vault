@@ -1,5 +1,5 @@
 import { esc, money, donut, barChart, emptyState, $, $$ } from '../ui.js';
-import { currentPeriod, inRange, totals, byCategory, catMap, dailySpend } from '../calc.js';
+import { currentPeriod, inRange, totals, byCategory, catMap, dailySpend, spendAmount } from '../calc.js';
 import { periodLabel, parseISO, addDays, daysBetween, iso } from '../lib/dates.js';
 import { formatINRShort } from '../lib/money.js';
 import { periodNav } from '../components.js';
@@ -29,7 +29,7 @@ export function render(root, ctx) {
   const daily = [];
   for (let i = 0; i < days; i++) {
     const d = addDays(period.start, i);
-    const v = ptx.filter((t) => t.date === d && t.type === 'expense').reduce((a, t) => a + t.amount, 0);
+    const v = ptx.filter((t) => t.date === d && t.type === 'expense').reduce((a, t) => a + spendAmount(t), 0);
     daily.push({ label: String(parseISO(d).getDate()), value: v, highlight: d === today, title: `${d}: ${formatINRShort(v)}` });
   }
   const elapsed = Math.max(1, Math.min(days, daysBetween(period.start, today) + 1));
@@ -57,22 +57,22 @@ export function render(root, ctx) {
   if (byCat[0] && tot.expense) insights.push(`<strong>${esc(cats[byCat[0].categoryId]?.name)}</strong> took ${Math.round((byCat[0].amount / tot.expense) * 100)}% of your spending.`);
   const jumps = byCat.map((x) => ({ ...x, diff: x.amount - (prevByCat[x.categoryId] || 0) })).filter((x) => x.diff > 0 && prevByCat[x.categoryId]).sort((a, b) => b.diff - a.diff);
   if (jumps[0]) insights.push(`Biggest increase: <strong>${esc(cats[jumps[0].categoryId]?.name)}</strong>, up ${money(jumps[0].diff)}.`);
-  const biggest = ptx.filter((t) => t.type === 'expense').sort((a, b) => b.amount - a.amount)[0];
-  if (biggest) insights.push(`Largest expense: ${money(biggest.amount)}${biggest.note ? ` for ${esc(biggest.note)}` : ''}.`);
+  const biggest = ptx.filter((t) => t.type === 'expense').sort((a, b) => spendAmount(b) - spendAmount(a))[0];
+  if (biggest) insights.push(`Largest expense: ${money(spendAmount(biggest))}${biggest.note ? ` for ${esc(biggest.note)}` : ''}.`);
   const wd = Array(7).fill(0);
-  ptx.filter((t) => t.type === 'expense').forEach((t) => (wd[parseISO(t.date).getDay()] += t.amount));
+  ptx.filter((t) => t.type === 'expense').forEach((t) => (wd[parseISO(t.date).getDay()] += spendAmount(t)));
   const maxWd = wd.indexOf(Math.max(...wd));
   if (wd[maxWd] > 0) insights.push(`You spend the most on <strong>${['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'][maxWd]}</strong>.`);
 
   // By account
   const accs = Object.fromEntries(state.accounts.map((a) => [a.id, a]));
   const accSpend = new Map();
-  ptx.filter((t) => t.type === 'expense').forEach((t) => accSpend.set(t.accountId, (accSpend.get(t.accountId) || 0) + t.amount));
+  ptx.filter((t) => t.type === 'expense' && t.accountId).forEach((t) => accSpend.set(t.accountId, (accSpend.get(t.accountId) || 0) + spendAmount(t)));
   const byAcc = [...accSpend.entries()].sort((a, b) => b[1] - a[1]);
 
   // Tags
   const tagMap = new Map();
-  ptx.filter((t) => t.type === 'expense').forEach((t) => (t.tags || []).forEach((g) => tagMap.set(g, (tagMap.get(g) || 0) + t.amount)));
+  ptx.filter((t) => t.type === 'expense').forEach((t) => (t.tags || []).forEach((g) => tagMap.set(g, (tagMap.get(g) || 0) + spendAmount(t))));
   const tags = [...tagMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
 
   root.innerHTML = `

@@ -21,6 +21,14 @@ A private, encrypted expense tracker for your phone and laptop. It is free, work
 - **Closed accounts** are hidden but keep their history.
 - **Bank statement import (CSV):** works with HDFC, SBI, ICICI, Axis, Kotak and other formats. It cleans up UPI and NEFT descriptions, fills in categories, skips duplicates, and records ATM withdrawals as transfers to Cash.
 
+**Splitting bills with friends & family**
+- **Split a bill:** equally, by exact amounts, percentages or shares, between any people, with you paying or a friend paying.
+- **I paid for someone:** they owe the full amount, and none of it is your spending.
+- **Only your share counts as spending.** Your bank balance still shows what really left your account.
+- **Groups:** trips, flatmates, family. See the total spent, your share, who paid what, and balances.
+- **Settle up** in full or in part (not counted as income or spending), with **reminders** you can copy, share or open in WhatsApp, including your UPI ID and a tap-to-pay link.
+- The **Friends card on Home** shows what's owed to you and what you owe.
+
 **Planning**
 - **Budgets:** an overall limit and per-category limits, with 80% and 100% warnings and optional **rollover** (unspent money carries into next month).
 - **Safe-to-spend per day** and a **spending pace** warning ("at this pace you'll overspend by ₹X").

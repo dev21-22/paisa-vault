@@ -562,3 +562,31 @@ body.sheet-open { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------- Split with friends ---------- */
+.add-person { display: flex; gap: 8px; margin-top: 8px; }
+.add-person input { min-height: 40px !important; }
+.share-rows { display: flex; flex-direction: column; gap: 6px; }
+.share-row { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); }
+.share-row:first-child { border-top: 0; }
+.share-row input { width: 6.5em !important; min-height: 38px !important; padding: 6px 10px !important; text-align: right; }
+.share-name { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.share-amt { font: 700 15px var(--font-display); min-width: 5.5em; text-align: right; }
+.group-ic { width: 42px; height: 42px; border-radius: 14px; background: var(--accent-soft); display: grid; place-items: center; font-size: 21px; flex: none; }
+.card-title .group-ic { width: 34px; height: 34px; font-size: 18px; border-radius: 11px; }
+.avatar { width: 42px; height: 42px; border-radius: 50%; flex: none; display: grid; place-items: center; font: 700 15px var(--font-display);
+  color: hsl(var(--h) 70% 30%); background: hsl(var(--h) 75% 85%); }
+:root[data-theme="dark"] .avatar { color: hsl(var(--h) 80% 85%); background: hsl(var(--h) 45% 26%); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .avatar { color: hsl(var(--h) 80% 85%); background: hsl(var(--h) 45% 26%); } }
+.avatar.big { width: 56px; height: 56px; font-size: 20px; }
+.amt-strong { font: 700 16px var(--font-display); }
+.act-list { display: flex; flex-direction: column; }
+.act-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); width: 100%; text-align: left; color: inherit; font: inherit; }
+.act-row:first-child { border-top: 0; }
+.act-ic { width: 34px; height: 34px; border-radius: 11px; background: var(--surface-2); display: grid; place-items: center; flex: none; color: var(--accent); }
+.act-ic.pos { color: var(--pos); }
+.act-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.act-main strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.person-hero, .group-hero { background: radial-gradient(120% 100% at 100% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%), var(--glass); }
+.mono-break { word-break: break-all; font-family: ui-monospace, monospace; font-size: 12px; }
+.acc > .btn { flex: none; }

@@ -6,6 +6,7 @@ import { evalAmount, suggestCategory, accountByLast4, frequentEntries, catMap } 
 import { iso, prettyDate } from './lib/dates.js';
 import { parseSMS } from './lib/sms.js';
 import { fromPaise } from './lib/money.js';
+import { openSharedForm, openSettlementDetail } from './share-form.js';
 
 let onChange = () => {};
 export function setTxnChangeHandler(fn) { onChange = fn; }
@@ -39,6 +40,11 @@ function openAdjustment(t) {
 
 export function openTxnForm(existing = null, preset = {}) {
   if (existing?.type === 'adjustment') return openAdjustment(existing);
+  if (existing?.type === 'settlement') return openSettlementDetail(existing);
+  if (existing?.shared) {
+    const sh = state.shared.find((x) => x.id === existing.shared.id);
+    if (sh) return openSharedForm(sh);
+  }
 
   const t = existing ? { ...existing } : {
     type: preset.type || 'expense', amount: preset.amount || 0, categoryId: preset.categoryId || null,
@@ -74,7 +80,7 @@ export function openTxnForm(existing = null, preset = {}) {
 
     <div class="field" id="tf-cat-wrap">
       <div class="row-between"><span class="label">Category</span>
-        <button type="button" class="btn-link small" id="tf-split-toggle">Split across categories</button></div>
+        <span class="row-end"><button type="button" class="btn-link small" id="tf-split-toggle">Split across categories</button>${existing ? '' : `<button type="button" class="btn-link small" id="tf-friends">${icon('people', 15)} Split with friends</button>`}</span></div>
       <div class="chips" id="tf-cats"></div>
       <div id="tf-splits" class="splits" hidden></div>
     </div>
@@ -167,6 +173,13 @@ export function openTxnForm(existing = null, preset = {}) {
     el.textContent = left === 0 ? 'All assigned' : left > 0 ? `₹${fromPaise(left).toLocaleString('en-IN')} left to assign` : `₹${fromPaise(-left).toLocaleString('en-IN')} too much`;
   }
 
+  $('#tf-friends', panel)?.addEventListener('click', () => {
+    const amount = evalAmount(amountEl.value);
+    const note = $('#tf-note', panel).value.trim();
+    closeSheet();
+    openSharedForm(null, { amount: amount > 0 ? amount : 0, desc: note, categoryId: selectedCat, accountId: $('#tf-account', panel).value, date: $('#tf-date', panel).value });
+  });
+
   $('#tf-split-toggle', panel).onclick = () => {
     if (splits) splits = null;
     else {
@@ -180,6 +193,8 @@ export function openTxnForm(existing = null, preset = {}) {
     const type = currentType();
     $('#tf-cat-wrap', panel).hidden = type === 'transfer';
     $('#tf-to-wrap', panel).hidden = type !== 'transfer';
+    const fr = $('#tf-friends', panel);
+    if (fr) fr.hidden = type !== 'expense';
     const quick = $('#tf-quick-wrap', panel);
     if (quick) quick.hidden = type !== 'expense';
     $('#tf-acc-label', panel).textContent = type === 'income' ? 'Received in' : type === 'transfer' ? 'From account' : 'Paid from';

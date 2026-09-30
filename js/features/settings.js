@@ -16,6 +16,7 @@ export function render(root, ctx) {
         <label class="field"><span class="label">Your name (for the greeting)</span><input id="st-name" maxlength="30" value="${esc(s.name)}"></label>
         <label class="field"><span class="label">Month starts on</span>
           <select id="st-start">${days.map((d) => `<option value="${d}" ${s.periodStartDay === d ? 'selected' : ''}>${d === 1 ? '1st (calendar month)' : `${d}th (e.g. salary day)`}</option>`).join('')}</select></label>
+        <label class="field"><span class="label">Your UPI ID (for reminders)</span><input id="st-upi" maxlength="60" value="${esc(s.upiId || '')}" placeholder="yourname@okhdfcbank" autocomplete="off"></label>
         <label class="field"><span class="label">Theme</span>
           <select id="st-theme">${[['system', 'Match device'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => `<option value="${v}" ${s.theme === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
       </div>
@@ -68,6 +69,11 @@ export function render(root, ctx) {
   const set = (k, v, after) => { s[k] = v; ctx.save(); after?.(); };
   $('#st-name', root).onchange = (e) => set('name', e.target.value.trim());
   $('#st-start', root).onchange = (e) => set('periodStartDay', Number(e.target.value), () => toast('Month start updated'));
+  $('#st-upi', root).onchange = (e) => {
+    const v = e.target.value.trim();
+    if (v && !/^[\w.\-]{2,}@[a-z]{2,}$/i.test(v)) { toast('That doesn\'t look like a UPI ID (name@bank).'); return; }
+    set('upiId', v, () => toast(v ? 'UPI ID saved' : 'UPI ID removed'));
+  };
   $('#st-theme', root).onchange = (e) => set('theme', e.target.value, ctx.applyTheme);
   $('#st-lock', root).onchange = (e) => set('autoLockMinutes', Number(e.target.value));
   $('#st-hide-lock', root).onchange = (e) => set('lockOnHide', e.target.checked);

@@ -16,6 +16,7 @@ js/features.js        FEATURE REGISTRY: every screen is listed here
 js/features/<id>.js   One screen per file; exports render(root, ctx)
 js/txn-form.js        Shared add/edit transaction sheet (splits, quick add, SMS fill)
 js/import-statement.js Bank statement CSV import sheet
+js/share-form.js      Split-bill, settle-up and reminder sheets
 js/components.js      Shared UI pieces (transaction rows, period nav)
 js/ui.js              esc(), icons, sheets, toasts, confirmSheet(), SVG charts
 js/calc.js            Pure calculations (totals, balances, evalAmount, suggestions)
@@ -45,6 +46,8 @@ Removing a feature: delete its registry entry, file, and `sw.js` line. Leave its
 - Transaction types: expense, income, transfer, adjustment (balance correction; amount is signed; never counted as income/spend).
 - Split transactions have `splits: [{categoryId, amount}]` summing to `amount`; always read categories via `parts(t)` / `hasCategory()`.
 - Liability accounts (`card`, `loan`) hold negative balances; show them as "owed" with `isLiability()`.
+- Split bills: `state.shared` + `state.settlements` (pure logic in js/lib/split.js, sheets in js/share-form.js). Each shared bill has one linked
+  txn with `shared: {id, myShare, paidBy}`; use `spendAmount(t)` / `parts(t)` for spending, never `t.amount`. Settlements are txn type 'settlement'.
 - Backup `merge()` matches accounts/categories by name so separately set-up devices don't duplicate them.
 
 ## Security rules (must keep)

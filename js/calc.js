@@ -22,13 +22,19 @@ export function currentPeriod(state, offset = 0, date) {
   return periodRange(date, state.settings.periodStartDay || 1, offset);
 }
 
-// Balance adjustments and transfers are not income or spending.
+// How much of an expense is really yours. A bill shared with friends counts only your share;
+// the rest is money they owe you.
+export function spendAmount(t) {
+  return t.shared ? t.shared.myShare : t.amount;
+}
+
+// Balance adjustments, transfers and settlements with friends are not income or spending.
 export function totals(txns) {
   let income = 0;
   let expense = 0;
   for (const t of txns) {
     if (t.type === 'income') income += t.amount;
-    else if (t.type === 'expense') expense += t.amount;
+    else if (t.type === 'expense') expense += spendAmount(t);
   }
   return { income, expense, net: income - expense };
 }
@@ -36,7 +42,7 @@ export function totals(txns) {
 // A transaction's category parts: split transactions give several, others give one.
 export function parts(t) {
   if (t.splits?.length) return t.splits;
-  return [{ categoryId: t.categoryId, amount: t.amount }];
+  return [{ categoryId: t.categoryId, amount: spendAmount(t) }];
 }
 
 export function hasCategory(t, categoryId) {
@@ -56,6 +62,7 @@ function applyTxn(bal, t) {
   if (t.type === 'income' && t.accountId in bal) bal[t.accountId] += t.amount;
   else if (t.type === 'expense' && t.accountId in bal) bal[t.accountId] -= t.amount;
   else if (t.type === 'adjustment' && t.accountId in bal) bal[t.accountId] += t.amount; // signed
+  else if (t.type === 'settlement' && t.accountId in bal) bal[t.accountId] += t.direction === 'in' ? t.amount : -t.amount;
   else if (t.type === 'transfer') {
     if (t.accountId in bal) bal[t.accountId] -= t.amount;
     if (t.toAccountId in bal) bal[t.toAccountId] += t.amount;
@@ -259,7 +266,7 @@ export function accountByLast4(state, last4) {
 export function frequentEntries(state, limit = 6) {
   const m = new Map();
   for (const t of state.txns.slice(-400)) {
-    if (t.type !== 'expense' || !t.note || t.splits?.length) continue;
+    if (t.type !== 'expense' || !t.note || t.splits?.length || t.shared) continue;
     const k = `${t.note.toLowerCase()}|${t.categoryId}|${t.amount}`;
     const e = m.get(k) || { note: t.note, categoryId: t.categoryId, amount: t.amount, accountId: t.accountId, count: 0 };
     e.count++;
@@ -278,7 +285,7 @@ export function detectSubscriptions(state, today = iso()) {
   const dismissed = new Set(state.dismissedSuggestions || []);
   const groups = new Map();
   for (const t of state.txns) {
-    if (t.type !== 'expense' || !t.note || t.date < since || t.recurringId) continue;
+    if (t.type !== 'expense' || !t.note || t.date < since || t.recurringId || t.shared) continue;
     const k = normalise(t.note);
     if (!k || known.has(k) || dismissed.has(k)) continue;
     if (!groups.has(k)) groups.set(k, []);
@@ -309,7 +316,7 @@ export function detectSubscriptions(state, today = iso()) {
 // Daily spend totals for a period, for the calendar heatmap.
 export function dailySpend(txns, { start, end }) {
   const m = {};
-  for (const t of txns) if (t.type === 'expense' && t.date >= start && t.date <= end) m[t.date] = (m[t.date] || 0) + t.amount;
+  for (const t of txns) if (t.type === 'expense' && t.date >= start && t.date <= end) m[t.date] = (m[t.date] || 0) + spendAmount(t);
   return m;
 }
 
