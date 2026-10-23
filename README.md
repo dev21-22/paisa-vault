@@ -8,7 +8,9 @@ A private, encrypted expense tracker for your phone and laptop. It is free, work
 - **Quick add:** amount, category, account and note. The amount box does sums (`250+120`).
 - **One-tap frequent entries:** items you add often (tea ₹20, metro ₹40) appear as buttons.
 - **Split transactions:** one DMart bill can be divided across Groceries and Household.
-- **Fill from a bank SMS:** paste a bank or UPI SMS to fill in the amount, merchant, date, *and the right account* (matched by its last 4 digits).
+- **Fill from a bank SMS:** one tap pastes a copied bank or UPI SMS and fills in the amount, merchant, date, *and the right account* (matched by its last 4 digits).
+- **Bank SMS review:** paste many messages at once (**History → Bank SMS**). OTPs, reminders and failed payments are skipped, duplicates are spotted, and messages already reviewed are remembered (by a hash, never the text) so pasting the same batch again adds nothing. On iPhone, a Shortcuts automation can collect every bank SMS into a note for you; the steps are inside that screen.
+- **Swipe and repeat:** on phones, swipe an entry left to delete it (with Undo) or right to add it again for today. **Repeat today** is also in the edit sheet.
 - **Smart categories:** your own rules ("contains milkman → Groceries"), then your past entries, then 150+ common Indian merchants (Swiggy, Zomato, Uber, Jio, BigBasket, IRCTC and more).
 
 **Multiple bank accounts and cards**
@@ -39,6 +41,7 @@ A private, encrypted expense tracker for your phone and laptop. It is free, work
 
 **Understanding your money**
 - **Reports:** category donut, daily bars with an average line, 6-month trend, **spending calendar** (with no-spend days), spending by account and by tag, and automatic insights.
+- **Year view:** calendar year or financial year (Apr–Mar), compared fairly with the same months last year, month-by-month chart, categories against last year, and **where you spend most** (top merchants; tap one to see every entry).
 - **Search** by note, category, `#tag` or amount, with filters by type, category, account and amount range.
 
 **Everyday comfort**

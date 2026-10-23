@@ -1,10 +1,10 @@
 // Offline support. Caches only the app's own files, never your data (your data lives encrypted in IndexedDB).
 // Bump VERSION whenever app files change so phones pick up the update.
-const VERSION = 'pv-5';
+const VERSION = 'pv-6';
 
 const FILES = [
   './', './index.html', './manifest.webmanifest', './css/app.css',
-  './js/app.js', './js/store.js', './js/features.js', './js/ui.js', './js/calc.js', './js/components.js', './js/txn-form.js', './js/import-statement.js', './js/share-form.js',
+  './js/app.js', './js/store.js', './js/features.js', './js/ui.js', './js/calc.js', './js/components.js', './js/txn-form.js', './js/import-statement.js', './js/import-sms.js', './js/share-form.js',
   './js/lib/crypto.js', './js/lib/money.js', './js/lib/dates.js', './js/lib/sms.js', './js/lib/merchants.js', './js/lib/statement.js', './js/lib/split.js',
   './js/features/home.js', './js/features/transactions.js', './js/features/reports.js', './js/features/budgets.js',
   './js/features/accounts.js', './js/features/recurring.js', './js/features/goals.js', './js/features/debts.js', './js/features/friends.js',

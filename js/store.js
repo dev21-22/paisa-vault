@@ -60,6 +60,7 @@ export function defaultState() {
       theme: 'system',
       lastBackup: null,
       upiId: '',
+      financialYear: false, // Reports year view: Apr–Mar instead of Jan–Dec
     },
     features: defaultFeatureState(),
     // { id, name, type: cash|bank|upi|card|loan|investment|other, opening(paise), bank, last4, color,
@@ -103,6 +104,7 @@ export function defaultState() {
     groups: [],      // { id, name, icon, memberIds[], archived }
     shared: [],      // { id, groupId, desc, amount, date, paidBy, mode, input, shares: { me|personId: paise }, categoryId, accountId, txnId, created }
     settlements: [], // { id, personId, direction: in (they paid you) | out (you paid them), amount, date, accountId, groupId, txnId, note, created }
+    smsSeen: [],     // hashes of bank SMS already reviewed (never the text), so pasting them again adds nothing
   };
 }
 
@@ -111,7 +113,7 @@ function migrate(s) {
   const d = defaultState();
   s.settings = { ...d.settings, ...s.settings };
   s.features = { ...d.features, ...s.features };
-  for (const k of ['accounts', 'categories', 'txns', 'recurring', 'goals', 'debts', 'rules', 'dismissedSuggestions', 'people', 'groups', 'shared', 'settlements']) s[k] ??= d[k];
+  for (const k of ['accounts', 'categories', 'txns', 'recurring', 'goals', 'debts', 'rules', 'dismissedSuggestions', 'people', 'groups', 'shared', 'settlements', 'smsSeen']) s[k] ??= d[k];
   s.budgets ??= {};
   s.budgetRollover ??= {};
   const colors = ['#3F7AE0', '#2E9E63', '#8C6BD1', '#E07A3F', '#D4A017', '#1F7A8C', '#C850C0'];

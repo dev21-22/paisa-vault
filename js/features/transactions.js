@@ -3,6 +3,7 @@ import { currentPeriod, inRange, totals, catMap, hasCategory, parts } from '../c
 import { periodLabel } from '../lib/dates.js';
 import { txnGroups, bindTxnClicks, periodNav } from '../components.js';
 import { toPaise } from '../lib/money.js';
+import { openSMSImport } from '../import-sms.js';
 
 // Filters survive moving between screens (memory only, cleared on lock).
 const f = { q: '', type: 'all', cat: 'all', acc: 'all', offset: 0, range: 'period', min: '', max: '', limit: 150 };
@@ -12,6 +13,7 @@ export function render(root, ctx) {
   if (ctx.params.categoryId) { f.cat = ctx.params.categoryId; f.type = 'all'; ctx.params.categoryId = null; }
   if (ctx.params.accountId) { f.acc = ctx.params.accountId; f.range = 'all'; ctx.params.accountId = null; }
   if (ctx.params.offset != null) { f.offset = ctx.params.offset; f.range = 'period'; ctx.params.offset = null; }
+  if (ctx.params.q != null) { Object.assign(f, { q: ctx.params.q, range: 'all', type: 'all', cat: 'all', acc: 'all', min: '', max: '' }); ctx.params.q = null; }
 
   const period = currentPeriod(state, f.offset);
   const cats = catMap(state);
@@ -45,6 +47,7 @@ export function render(root, ctx) {
         <label class="seg-item"><input type="radio" name="range" value="period" ${f.range === 'period' ? 'checked' : ''}><span>Month</span></label>
         <label class="seg-item"><input type="radio" name="range" value="all" ${f.range === 'all' ? 'checked' : ''}><span>All time</span></label>
       </div>
+      <button type="button" class="btn btn-small" id="tx-sms">${icon('sms', 16)} Bank SMS</button>
     </div>
     ${f.range === 'period' ? periodNav(periodLabel(period), 'tx') : ''}
 
@@ -68,12 +71,14 @@ export function render(root, ctx) {
       <span>Out ${money(tot.expense, { cls: 'neg' })}</span>
       <span>In ${money(tot.income, { cls: 'pos' })}</span>
     </div>
+    ${shown.length ? '<p class="muted small touch-only">Swipe an entry left to delete it, or right to add it again for today.</p>' : ''}
 
     ${shown.length ? txnGroups(state, shown) : emptyState(state.txns.length ? 'Nothing matches' : 'No transactions yet', state.txns.length ? 'Try a different search or clear the filters.' : 'Tap + to add your first one.')}
     ${list.length > shown.length ? `<button type="button" class="btn btn-block" id="tx-more">Show ${Math.min(150, list.length - shown.length)} more</button>` : ''}
   </div>`;
 
   bindTxnClicks(root, state, ctx.openTxnForm);
+  $('#tx-sms', root).onclick = () => openSMSImport(ctx.refresh);
 
   const rerender = () => render(root, ctx);
   let qTimer;

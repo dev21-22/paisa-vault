@@ -1,12 +1,13 @@
 // The add / edit transaction sheet, used from every screen.
 
 import { state, save, uid } from './store.js';
-import { openSheet, closeSheet, esc, icon, toast, money, $, $$, confirmSheet, calcKeys } from './ui.js';
+import { openSheet, closeSheet, esc, icon, toast, money, $, $$, confirmSheet, calcKeys, haptic } from './ui.js';
 import { evalAmount, suggestCategory, accountByLast4, frequentEntries, catMap } from './calc.js';
 import { iso, prettyDate } from './lib/dates.js';
-import { parseSMS } from './lib/sms.js';
+import { parseSMS, splitMessages, isPaymentSMS } from './lib/sms.js';
 import { fromPaise } from './lib/money.js';
 import { openSharedForm, openSettlementDetail } from './share-form.js';
+import { openSMSImport } from './import-sms.js';
 
 let onChange = () => {};
 export function setTxnChangeHandler(fn) { onChange = fn; }
@@ -17,12 +18,37 @@ function defaultAccountId() {
   return state.accounts.find((a) => !a.archived)?.id || state.accounts[0]?.id;
 }
 
-function deleteTxn(existing) {
+export function deleteTxn(existing) {
   const idx = state.txns.findIndex((x) => x.id === existing.id);
+  if (idx === -1) return;
   const [removed] = state.txns.splice(idx, 1);
   save();
   onChange();
   toast('Transaction deleted', () => { state.txns.splice(idx, 0, removed); save(); onChange(); });
+}
+
+// Plain entries can be repeated and deleted straight from the list. Split bills, settlements and
+// balance corrections are tied to other records, so they open their own sheet instead.
+export function quickActionable(t) {
+  return ['expense', 'income', 'transfer'].includes(t.type) && !t.shared;
+}
+
+// The same entry again, dated today (tea, metro, petrol...).
+export function repeatTxn(t) {
+  const copy = {
+    ...structuredClone(t), id: uid(), date: iso(), created: Date.now(),
+    tags: (t.tags || []).filter((g) => !['recurring', 'imported', 'sms'].includes(g)),
+  };
+  delete copy.recurringId;
+  state.txns.push(copy);
+  save();
+  onChange();
+  toast(`Added again for today${t.note ? `: ${t.note}` : ''}`, () => {
+    const i = state.txns.findIndex((x) => x.id === copy.id);
+    if (i !== -1) state.txns.splice(i, 1);
+    save();
+    onChange();
+  });
 }
 
 // Balance corrections are shown read-only; they can only be deleted.
@@ -104,7 +130,7 @@ export function openTxnForm(existing = null, preset = {}) {
     <p class="error" id="tf-error" role="alert" hidden></p>
 
     <div class="row-between">
-      ${existing ? `<button type="button" class="btn btn-danger-ghost" id="tf-delete">${icon('trash', 18)} Delete</button>` : `<button type="button" class="btn btn-ghost" id="tf-sms">${icon('sms', 18)} Paste bank SMS</button>`}
+      ${existing ? `<span class="row-wrap"><button type="button" class="btn btn-danger-ghost" id="tf-delete">${icon('trash', 18)} Delete</button><button type="button" class="btn btn-ghost" id="tf-repeat">${icon('repeat', 18)} Repeat today</button></span>` : `<button type="button" class="btn btn-ghost" id="tf-sms">${icon('sms', 18)} Paste bank SMS</button>`}
       <div class="row-end">
         ${existing ? '' : '<button type="submit" class="btn" data-again="1">Save &amp; add another</button>'}
         <button type="submit" class="btn btn-primary">Save</button>
@@ -237,38 +263,61 @@ export function openTxnForm(existing = null, preset = {}) {
     if (s && s !== selectedCat) { selectedCat = s; renderCats(); }
   };
 
-  $('#tf-sms', panel)?.addEventListener('click', () => {
+  function fillFromSMS(text) {
+    const r = parseSMS(text);
+    if (!r) { showError('No amount found in that SMS. Check that it has Rs, INR or ₹.'); return false; }
+    form.querySelector(`input[name=type][value=${r.type}]`).checked = true;
+    syncType();
+    amountEl.value = fromPaise(r.amount);
+    if (r.merchant) {
+      $('#tf-note', panel).value = r.merchant;
+      const s = suggestCategory(state, r.merchant, r.type);
+      if (s) { selectedCat = s; renderCats(); }
+    }
+    if (r.date && r.date <= iso()) $('#tf-date', panel).value = r.date;
+    const byDigits = accountByLast4(state, r.last4);
+    const byMethod = r.method && state.accounts.find((a) => a.type === r.method && !a.archived);
+    const acc = byDigits || byMethod;
+    if (acc) $('#tf-account', panel).value = acc.id;
+    showError('');
+    toast(byDigits ? `Filled from SMS. Account: ${byDigits.name}.` : r.last4 ? `Filled from SMS. Tip: add ··${r.last4} to an account to match it next time.` : 'Filled from SMS. Check and save.');
+    return true;
+  }
+  // Several payment messages at once go to the review list instead of this form.
+  const manyPayments = (text) => splitMessages(text).filter((m) => isPaymentSMS(m.text)).length > 1;
+  const toReview = (text) => { closeSheet(); openSMSImport(onChange, text); };
+
+  function showSMSBox() {
     const box = document.createElement('div');
     box.className = 'sms-box';
     box.innerHTML = `
       <label class="field"><span class="label">Paste the bank or UPI SMS</span>
       <textarea id="tf-sms-text" rows="4" placeholder="Rs.450.00 debited from A/c XX1234 on 29-09-26 to VPA swiggy@icici..."></textarea></label>
       <p class="hint">Read on this device only. The SMS text is not saved.</p>
-      <button type="button" class="btn" id="tf-sms-go">Fill from SMS</button>`;
+      <div class="row-between"><button type="button" class="btn" id="tf-sms-go">Fill from SMS</button>
+        <button type="button" class="btn-link small" id="tf-sms-many">Several messages?</button></div>`;
     form.prepend(box);
     $('#tf-sms', panel).hidden = true;
     $('#tf-sms-text', panel).focus();
     $('#tf-sms-go', panel).onclick = () => {
-      const r = parseSMS($('#tf-sms-text', panel).value);
-      if (!r) { showError('No amount found in that SMS. Check that it has Rs, INR or ₹.'); return; }
-      form.querySelector(`input[name=type][value=${r.type}]`).checked = true;
-      syncType();
-      amountEl.value = fromPaise(r.amount);
-      if (r.merchant) {
-        $('#tf-note', panel).value = r.merchant;
-        const s = suggestCategory(state, r.merchant, r.type);
-        if (s) { selectedCat = s; renderCats(); }
-      }
-      if (r.date) $('#tf-date', panel).value = r.date;
-      const byDigits = accountByLast4(state, r.last4);
-      const byMethod = r.method && state.accounts.find((a) => a.type === r.method && !a.archived);
-      const acc = byDigits || byMethod;
-      if (acc) $('#tf-account', panel).value = acc.id;
-      box.remove();
-      showError('');
-      toast(byDigits ? `Filled from SMS. Account: ${byDigits.name}.` : r.last4 ? `Filled from SMS. Tip: add ··${r.last4} to an account to match it next time.` : 'Filled from SMS. Check and save.');
+      const text = $('#tf-sms-text', panel).value;
+      if (manyPayments(text)) return toReview(text);
+      if (fillFromSMS(text)) box.remove();
     };
+    $('#tf-sms-many', panel).onclick = () => toReview($('#tf-sms-text', panel).value);
+  }
+
+  // One tap: read the copied SMS straight from the clipboard (iPhone shows a small Paste bubble to confirm).
+  // If the clipboard can't be read, show a box to paste into.
+  $('#tf-sms', panel)?.addEventListener('click', async () => {
+    let text = '';
+    try { text = (await navigator.clipboard?.readText?.()) || ''; } catch { /* permission refused */ }
+    if (text && manyPayments(text)) return toReview(text);
+    if (text && isPaymentSMS(text) && fillFromSMS(text)) return;
+    showSMSBox();
   });
+
+  $('#tf-repeat', panel)?.addEventListener('click', () => { closeSheet(); haptic(); repeatTxn(existing); });
 
   $('#tf-delete', panel)?.addEventListener('click', async () => {
     if (!(await confirmSheet('Delete transaction?', 'This removes it from all totals.'))) return;
@@ -326,6 +375,7 @@ export function openTxnForm(existing = null, preset = {}) {
       state.settings.lastAccountId = rec.accountId;
     }
     save();
+    haptic();
     onChange();
     closeSheet();
     if (again) {

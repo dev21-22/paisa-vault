@@ -382,9 +382,21 @@ details.plain summary { cursor: pointer; color: var(--accent); font-weight: 600;
 .day-head { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); padding: 6px 4px 0; }
 .txn-list { display: flex; flex-direction: column; border-radius: var(--radius); overflow: hidden; }
 .card .txn-list { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
-.txn { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border: 0; border-top: 1px solid var(--line); background: transparent; text-align: left; cursor: pointer; width: 100%; transition: background 0.15s; }
+.txn-row { position: relative; overflow: hidden; border-top: 1px solid var(--line); }
+.txn-row:first-child { border-top: 0; }
+.txn { position: relative; display: flex; align-items: center; gap: 12px; padding: 11px 14px; border: 0; background: transparent; text-align: left; cursor: pointer; width: 100%; transition: background 0.15s; }
 .card .txn { padding-inline: 0; }
-.txn:first-child { border-top: 0; }
+/* Swipe left to delete, right to repeat (phones). The row slides over a coloured action strip. */
+.txn[data-swipe] { touch-action: pan-y; }
+.swipe-act { position: absolute; inset: 0; display: flex; align-items: center; gap: 6px; padding: 0 20px; font-weight: 700; font-size: 14px;
+  color: var(--on-accent); opacity: 0; transition: opacity 0.12s; }
+.swipe-repeat { justify-content: flex-start; background: var(--accent); }
+.swipe-delete { justify-content: flex-end; background: var(--neg); }
+.txn-row.swiping .txn { background: var(--solid); }
+.txn-row.swiping[data-dir="right"] .swipe-repeat, .txn-row.swiping[data-dir="left"] .swipe-delete { opacity: 0.45; }
+.txn-row.armed[data-dir="right"] .swipe-repeat, .txn-row.armed[data-dir="left"] .swipe-delete { opacity: 1; }
+.touch-only { display: none; }
+@media (pointer: coarse) { .touch-only { display: block; } }
 .txn:hover { background: var(--surface-2); }
 .txn-ic { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; flex: none; font-size: 19px;
   background: color-mix(in srgb, var(--c) 20%, transparent); color: var(--c); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 25%, transparent); }
@@ -448,6 +460,19 @@ details.plain summary { cursor: pointer; color: var(--accent); font-weight: 600;
 .tb.out, .sw.out { background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 55%, transparent)); }
 .trend-label { font-size: 12px; font-weight: 600; }
 .trend-val { font-size: 11px; color: var(--muted); white-space: nowrap; }
+/* Year view: twelve narrow months */
+.trend-year { grid-template-columns: repeat(12, 1fr); gap: 2px; }
+.trend-year .tb { width: 42%; border-radius: 4px 4px 2px 2px; }
+.trend-year .trend-bars { gap: 2px; }
+.trend-year .trend-label { font-size: 11px; }
+.trend-year .trend-val { font-size: 9.5px; letter-spacing: -0.02em; }
+.trend-col.future { opacity: 0.35; }
+.year-kind { align-self: center; }
+.change { font-size: 11.5px; font-weight: 700; margin-left: 4px; white-space: nowrap; }
+.merchant-list { display: flex; flex-direction: column; }
+.merchant { display: flex; align-items: center; gap: 12px; padding: 10px 0; border: 0; border-top: 1px solid var(--line); background: transparent; color: inherit; text-align: left; cursor: pointer; width: 100%; }
+.merchant:first-child { border-top: 0; }
+.merchant-rank { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; flex: none; font: 700 13px var(--font-display); background: var(--accent-soft); color: var(--accent); }
 .legend-inline { display: flex; gap: 16px; font-size: 13px; color: var(--muted); align-items: center; flex-wrap: wrap; }
 .legend-inline span { display: inline-flex; align-items: center; gap: 6px; }
 .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }

@@ -43,6 +43,22 @@ export function calcKeys(input) {
   return wrap;
 }
 
+// A light tap of feedback. Android has navigator.vibrate; iPhone has no API for web apps,
+// but Safari 18+ gives a haptic tick when a switch control is toggled, so toggle a hidden one.
+let hapticSwitch = null;
+export function haptic() {
+  if (navigator.vibrate) { navigator.vibrate(12); return; }
+  if (!isIOS()) return;
+  if (!hapticSwitch) {
+    hapticSwitch = document.createElement('label');
+    hapticSwitch.className = 'visually-hidden';
+    hapticSwitch.setAttribute('aria-hidden', 'true');
+    hapticSwitch.innerHTML = '<input type="checkbox" switch tabindex="-1">';
+    document.body.append(hapticSwitch);
+  }
+  hapticSwitch.click();
+}
+
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 

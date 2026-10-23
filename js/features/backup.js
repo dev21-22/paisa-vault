@@ -181,6 +181,7 @@ export function merge(into, from) {
     }
   }
   for (const [k, v] of Object.entries(from.budgets || {})) if (!(fix(k) in into.budgets)) into.budgets[fix(k)] = v;
+  into.smsSeen = [...new Set([...(into.smsSeen || []), ...(from.smsSeen || [])])].slice(-3000);
   into.budgetRollover ??= {};
   for (const [k, v] of Object.entries(from.budgetRollover || {})) if (!(fix(k) in into.budgetRollover)) into.budgetRollover[fix(k)] = v;
   return added;

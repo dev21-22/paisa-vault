@@ -1,12 +1,21 @@
 import { esc, money, donut, barChart, emptyState, $, $$ } from '../ui.js';
-import { currentPeriod, inRange, totals, byCategory, catMap, dailySpend, spendAmount } from '../calc.js';
+import { currentPeriod, inRange, totals, byCategory, catMap, dailySpend, spendAmount, yearRange, yearReport } from '../calc.js';
 import { periodLabel, parseISO, addDays, daysBetween, iso } from '../lib/dates.js';
 import { formatINRShort } from '../lib/money.js';
 import { periodNav } from '../components.js';
 
 let offset = 0;
+let view = 'month'; // or 'year'
+let yearOffset = 0;
+
+const viewSwitch = () => `<div class="seg" role="radiogroup" aria-label="Report view">
+  <label class="seg-item"><input type="radio" name="rview" value="month" ${view === 'month' ? 'checked' : ''}><span>Month</span></label>
+  <label class="seg-item"><input type="radio" name="rview" value="year" ${view === 'year' ? 'checked' : ''}><span>Year</span></label>
+</div>`;
+const bindViewSwitch = (root, ctx) => $$('input[name=rview]', root).forEach((r) => (r.onchange = () => { view = r.value; render(root, ctx); }));
 
 export function render(root, ctx) {
+  if (view === 'year') return renderYear(root, ctx);
   const { state } = ctx;
   const period = currentPeriod(state, offset);
   const prev = currentPeriod(state, offset - 1);
@@ -77,6 +86,7 @@ export function render(root, ctx) {
 
   root.innerHTML = `
   <div class="stack">
+    ${viewSwitch()}
     ${periodNav(periodLabel(period), 'rp')}
 
     <div class="kpis">
@@ -136,9 +146,121 @@ export function render(root, ctx) {
       <div class="tag-list">${tags.map(([g, v]) => `<span class="tag-pill">#${esc(g)} ${money(v)}</span>`).join('')}</div></div>` : ''}
   </div>`;
 
+  bindViewSwitch(root, ctx);
   $('#rp-prev', root).onclick = () => { offset--; render(root, ctx); };
   $('#rp-next', root).onclick = () => { offset++; render(root, ctx); };
   $$('[data-cat]', root).forEach((b) => (b.onclick = () => ctx.go('transactions', { categoryId: b.dataset.cat, offset })));
+}
+
+// The whole year at a glance: totals, a fair comparison with last year, month by month,
+// categories against last year and the places you spend most.
+function renderYear(root, ctx) {
+  const { state } = ctx;
+  const fy = !!state.settings.financialYear;
+  const range = yearRange(fy, yearOffset);
+  const r = yearReport(state, range);
+  const cats = catMap(state);
+  const running = r.win.end < range.end;
+  const pct = (a, b) => (b > 0 ? Math.round(((a - b) / b) * 100) : null);
+  const spendCh = pct(r.tot.expense, r.prevTot.expense);
+  const incomeCh = pct(r.tot.income, r.prevTot.income);
+  const monthsWithData = Math.max(1, r.elapsedMonths);
+  const versus = running ? 'the same months last year' : 'last year';
+  // Whole rupees read better over a year (₹3,04,545, not ₹3,04,544.3).
+  const rs = (p, opts) => money(Math.round(p / 100) * 100, opts);
+
+  const insights = [];
+  if (r.hasPrev && spendCh !== null) {
+    insights.push(spendCh > 0 ? `You spent <strong class="neg">${spendCh}% more</strong> than ${versus} (${rs(r.prevTot.expense)}).`
+      : spendCh < 0 ? `You spent <strong class="pos">${-spendCh}% less</strong> than ${versus} (${rs(r.prevTot.expense)}).`
+        : `You spent the same as ${versus}.`);
+  }
+  if (r.hasPrev && incomeCh !== null && r.tot.income) {
+    insights.push(incomeCh > 0 ? `Income is <strong class="pos">up ${incomeCh}%</strong> on ${versus}.`
+      : incomeCh < 0 ? `Income is <strong class="neg">down ${-incomeCh}%</strong> on ${versus}.` : `Income is the same as ${versus}.`);
+  }
+  if (r.tot.income > 0) {
+    const rate = Math.round((r.tot.net / r.tot.income) * 100);
+    insights.push(`You saved <strong>${rate}%</strong> of your income${rate >= 20 ? ', which is a healthy rate' : ''}.`);
+  }
+  if (r.highest) insights.push(`Most expensive month: <strong>${esc(r.highest.label)}</strong>, ${rs(r.highest.expense)}.`);
+  if (r.lowest) insights.push(`Lightest month: <strong>${esc(r.lowest.label)}</strong>, ${rs(r.lowest.expense)}.`);
+  if (r.tot.expense) insights.push(`<strong>${r.noSpendDays}</strong> no-spend day${r.noSpendDays === 1 ? '' : 's'} so far.`);
+
+  const max = Math.max(1, ...r.months.flatMap((m) => [m.income, m.expense]));
+  const catMax = Math.max(1, ...r.byCat.map((x) => x.amount));
+  const change = (now, before) => {
+    if (!r.hasPrev) return '';
+    if (!before) return '<span class="pill">new</span>';
+    const c = pct(now, before);
+    return `<span class="change ${c > 0 ? 'neg' : c < 0 ? 'pos' : 'neutral'}">${c > 0 ? '▲' : c < 0 ? '▼' : ''}${Math.abs(c)}%</span>`;
+  };
+
+  root.innerHTML = `
+  <div class="stack">
+    ${viewSwitch()}
+    ${periodNav(range.label, 'ry')}
+    <div class="seg seg-small year-kind" role="radiogroup" aria-label="Kind of year">
+      <label class="seg-item"><input type="radio" name="ykind" value="cal" ${fy ? '' : 'checked'}><span>Jan–Dec</span></label>
+      <label class="seg-item"><input type="radio" name="ykind" value="fy" ${fy ? 'checked' : ''}><span>Financial year (Apr–Mar)</span></label>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><span class="label">Spent</span><span class="num">${rs(r.tot.expense)}</span></div>
+      <div class="kpi"><span class="label">Income</span><span class="num pos">${rs(r.tot.income)}</span></div>
+      <div class="kpi"><span class="label">Saved</span><span class="num ${r.tot.net < 0 ? 'neg' : ''}">${rs(r.tot.net)}</span></div>
+      <div class="kpi"><span class="label">Per month</span><span class="num">${rs(Math.round(r.tot.expense / monthsWithData))}</span></div>
+    </div>
+
+    ${!r.tot.expense && !r.tot.income ? emptyState('No data for this year', 'Entries from this year will show up here.') : `
+    <div class="card">
+      <h2 class="card-title">${running ? 'So far this year' : 'The year in short'}</h2>
+      <ul class="insights">${insights.map((i) => `<li>${i}</li>`).join('')}</ul>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title">Month by month</h2>
+      <div class="trend trend-year">${r.months.map((m) => `
+        <div class="trend-col ${m.future ? 'future' : ''}" title="${esc(m.label)}: spent ${esc(formatINRShort(m.expense))}, income ${esc(formatINRShort(m.income))}">
+          <div class="trend-bars">
+            <span class="tb in" style="height:${(m.income / max) * 100}%"></span>
+            <span class="tb out" style="height:${(m.expense / max) * 100}%"></span>
+          </div>
+          <span class="trend-label">${esc(m.label)}</span>
+          <span class="trend-val amt">${m.expense ? esc(formatINRShort(m.expense).replace('₹', '')) : ''}</span>
+        </div>`).join('')}</div>
+      <div class="legend-inline"><span><i class="sw in"></i>Income</span><span><i class="sw out"></i>Expenses</span></div>
+    </div>
+
+    ${r.byCat.length ? `<div class="card">
+      <div class="row-between"><h2 class="card-title">Categories</h2>${r.hasPrev ? `<span class="muted small">vs ${esc(versus)}</span>` : ''}</div>
+      <div class="cat-bars">${r.byCat.slice(0, 10).map((x) => `<div class="cat-bar">
+        <span class="cat-name">${esc(cats[x.categoryId]?.icon || '')} ${esc(cats[x.categoryId]?.name || 'Other')}</span>
+        <span class="cat-track"><span style="width:${Math.max(2, (x.amount / catMax) * 100)}%;background:${esc(cats[x.categoryId]?.color || 'var(--accent)')}"></span></span>
+        <span class="cat-amt">${rs(x.amount)} ${change(x.amount, x.prev)}</span></div>`).join('')}</div>
+    </div>` : ''}
+
+    ${r.merchants.length ? `<div class="card">
+      <h2 class="card-title">Where you spend most</h2>
+      <div class="merchant-list">${r.merchants.map((m, i) => `
+        <button type="button" class="merchant" data-q="${esc(m.name)}">
+          <span class="merchant-rank">${i + 1}</span>
+          <span class="txn-main"><span class="txn-title">${esc(m.name)}</span><span class="txn-sub">${m.count} time${m.count === 1 ? '' : 's'} · about ${rs(Math.round(m.amount / m.count))} each</span></span>
+          <span class="txn-amt">${rs(m.amount)}</span>
+        </button>`).join('')}</div>
+      <p class="muted small">Grouped by the note on each entry. Tap one to see every entry.</p>
+    </div>` : ''}`}
+  </div>`;
+
+  bindViewSwitch(root, ctx);
+  $('#ry-prev', root).onclick = () => { yearOffset--; render(root, ctx); };
+  $('#ry-next', root).onclick = () => { yearOffset++; render(root, ctx); };
+  $$('input[name=ykind]', root).forEach((x) => (x.onchange = () => {
+    state.settings.financialYear = x.value === 'fy';
+    ctx.save();
+    render(root, ctx);
+  }));
+  $$('[data-q]', root).forEach((b) => (b.onclick = () => ctx.go('transactions', { q: b.dataset.q })));
 }
 
 // Month calendar, each day shaded by how much was spent.

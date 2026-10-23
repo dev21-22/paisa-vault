@@ -332,3 +332,72 @@ export function vaultSummary(state) {
   const a = state.accounts.filter((x) => !x.archived).length;
   return `${n.toLocaleString('en-IN')} ${n === 1 ? 'entry' : 'entries'} and ${a} account${a === 1 ? '' : 's'}`;
 }
+
+// ---------- Year view ----------
+
+// A calendar year (Jan–Dec) or Indian financial year (Apr–Mar), `offset` years from the current one.
+export function yearRange(financialYear, offset = 0, today = iso()) {
+  const d = parseISO(today);
+  let y = d.getFullYear();
+  if (financialYear && d.getMonth() < 3) y -= 1;
+  y += offset;
+  return financialYear
+    ? { start: `${y}-04-01`, end: `${y + 1}-03-31`, label: `FY ${y}–${String(y + 1).slice(2)}` }
+    : { start: `${y}-01-01`, end: `${y}-12-31`, label: String(y) };
+}
+
+// Same day one year earlier (29 Feb becomes 28 Feb).
+const yearBefore = (s) => `${Number(s.slice(0, 4)) - 1}${s.slice(4) === '-02-29' ? '-02-28' : s.slice(4)}`;
+
+// Everything the year view shows. While a year is still running, it is compared with the same
+// stretch of last year (1 Jan–24 Oct vs 1 Jan–24 Oct), not the whole of last year.
+export function yearReport(state, range, today = iso()) {
+  const upTo = today < range.end ? today : range.end;
+  const win = { start: range.start, end: upTo };
+  const prevWin = { start: yearBefore(win.start), end: yearBefore(win.end) };
+  const txns = upTo >= range.start ? inRange(state.txns, win) : [];
+  const prevTxns = upTo >= range.start ? inRange(state.txns, prevWin) : [];
+
+  const [y, m] = range.start.split('-').map(Number);
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const start = iso(new Date(y, m - 1 + i, 1));
+    const end = iso(new Date(y, m + i, 0));
+    const t = totals(txns.filter((x) => x.date >= start && x.date <= end));
+    return { start, end, label: parseISO(start).toLocaleDateString('en-IN', { month: 'short' }), ...t, future: start > upTo };
+  });
+
+  const prevByCat = Object.fromEntries(byCategory(prevTxns).map((x) => [x.categoryId, x.amount]));
+  const byCat = byCategory(txns).map((x) => ({ ...x, prev: prevByCat[x.categoryId] || 0 }));
+
+  const elapsedDays = upTo >= range.start ? daysBetween(range.start, upTo) + 1 : 0;
+  const spendDays = new Set(txns.filter((t) => t.type === 'expense').map((t) => t.date)).size;
+  const done = months.filter((x) => !x.future && x.expense > 0);
+  return {
+    range, win, months, byCat,
+    tot: totals(txns), prevTot: totals(prevTxns), hasPrev: prevTxns.length > 0,
+    merchants: topMerchants(txns),
+    elapsedMonths: months.filter((x) => !x.future).length,
+    noSpendDays: elapsedDays - spendDays,
+    highest: done.length ? done.reduce((a, b) => (b.expense > a.expense ? b : a)) : null,
+    lowest: done.length > 1 ? done.reduce((a, b) => (b.expense < a.expense ? b : a)) : null,
+  };
+}
+
+// Where the money went, by note/merchant: "Swiggy · 48 times · ₹18,400". Notes are matched
+// ignoring case and spacing; the most-used spelling is shown.
+export function topMerchants(txns, limit = 10) {
+  const m = new Map();
+  for (const t of txns) {
+    if (t.type !== 'expense' || !t.note?.trim()) continue;
+    const key = t.note.trim().toLowerCase().replace(/\s+/g, ' ');
+    const e = m.get(key) || { amount: 0, count: 0, names: new Map() };
+    e.amount += spendAmount(t);
+    e.count++;
+    e.names.set(t.note.trim(), (e.names.get(t.note.trim()) || 0) + 1);
+    m.set(key, e);
+  }
+  return [...m.values()]
+    .map((e) => ({ name: [...e.names.entries()].sort((a, b) => b[1] - a[1])[0][0], amount: e.amount, count: e.count }))
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, limit);
+}
