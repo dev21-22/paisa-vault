@@ -325,3 +325,10 @@ export function findDuplicate(state, { accountId, amount, date, type }) {
   return state.txns.find((t) => t.accountId === accountId && t.amount === amount
     && (t.type === type || (type === 'expense' && t.type === 'transfer')) && Math.abs(daysBetween(t.date, date)) <= 1) || null;
 }
+
+// "1,234 entries and 5 accounts": shown after a restore and on Backup, so two devices can be compared.
+export function vaultSummary(state) {
+  const n = state.txns.length;
+  const a = state.accounts.filter((x) => !x.archived).length;
+  return `${n.toLocaleString('en-IN')} ${n === 1 ? 'entry' : 'entries'} and ${a} account${a === 1 ? '' : 's'}`;
+}

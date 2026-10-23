@@ -2,10 +2,11 @@
 
 import * as store from './store.js';
 import { FEATURES, enabledFeatures, loadFeature, isOn } from './features.js';
-import { $, $$, esc, icon, toast, closeSheet, confirmSheet, lockGuard } from './ui.js';
+import { $, $$, esc, icon, toast, closeSheet, confirmSheet, lockGuard, pickFile, isIOS, isStandalone } from './ui.js';
 import { openTxnForm, setTxnChangeHandler } from './txn-form.js';
 import { setShareChangeHandler } from './share-form.js';
 import { passwordStrength, openBackup } from './lib/crypto.js';
+import { vaultSummary } from './calc.js';
 
 const root = $('#root');
 let currentRoute = 'home';
@@ -34,6 +35,9 @@ function showSetup() {
   <div class="lock-wrap">
     <div class="lock-card">
       <div class="brand">${icon('shield', 28)}<span>Paisa Vault</span></div>
+      ${isIOS() && !isStandalone() ? `<div class="notice" id="su-ios">${icon('download', 20)}<span><strong>On iPhone, install first.</strong>
+        Tap Share ${icon('upload', 15)} then <strong>Add to Home Screen</strong>, and open Paisa Vault from that icon.
+        Data entered in this Safari tab stays in Safari and won't appear in the Home Screen app.</span></div>` : ''}
       <h1>Create your master password</h1>
       <p class="muted">Everything you enter is encrypted on this device with this password. Nothing is sent to any server.</p>
       <form id="setup-form" class="form" novalidate>
@@ -74,7 +78,7 @@ function showSetup() {
     startApp();
   };
 
-  $('#su-restore').onclick = () => $('#su-file').click();
+  $('#su-restore').onclick = () => pickFile($('#su-file'));
   $('#su-file').onchange = async (e) => {
     const f = e.target.files[0];
     if (!f) return;
@@ -91,6 +95,7 @@ function showRestorePassword(file) {
     <h1>Restore backup</h1>
     <p class="muted">Enter the password that was used when this backup was made. It becomes this device's master password too.</p>
     <form id="rs-form" class="form" novalidate>
+      <input type="text" class="visually-hidden" name="username" autocomplete="username" value="Paisa Vault" tabindex="-1" aria-hidden="true" readonly>
       <label class="field"><span class="label">Backup password</span><input id="rs-pw" type="password" autocomplete="current-password" required></label>
       <p class="error" id="rs-err" role="alert" hidden></p>
       <button class="btn btn-primary btn-block" type="submit">Decrypt and restore</button>
@@ -109,6 +114,7 @@ function showRestorePassword(file) {
       await store.createVault(pw);
       await store.replaceState(data);
       startApp();
+      toast(`Restored ${vaultSummary(store.state)}`);
     } catch (ex) {
       $('#rs-err').textContent = ex.message;
       $('#rs-err').hidden = false;
@@ -138,6 +144,7 @@ function showUnlock() {
     <div class="brand">${icon('shield', 28)}<span>Paisa Vault</span></div>
     <h1>Unlock</h1>
     <form id="ul-form" class="form" novalidate>
+      <input type="text" class="visually-hidden" name="username" autocomplete="username" value="Paisa Vault" tabindex="-1" aria-hidden="true" readonly>
       <label class="field"><span class="label">Master password</span>
         <input id="ul-pw" type="password" autocomplete="current-password" required></label>
       <p class="error" id="ul-err" role="alert" hidden></p>
@@ -182,6 +189,8 @@ function unbusy(btn, html) { if (btn) { btn.disabled = false; btn.innerHTML = ht
 
 // ---------------- Main app ----------------
 function startApp() {
+  // Ask the browser never to clear the vault to free up space (iPhone grants this to Home Screen apps).
+  navigator.storage?.persist?.().catch(() => {});
   const added = store.processRecurring();
   applyTheme();
   renderShell();

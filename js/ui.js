@@ -7,11 +7,40 @@ export function esc(v) {
   return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 }
 
+// iPhone/iPad (iPadOS reports itself as a Mac, so also check for touch).
+export const isIOS = () => /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+// Opened from the Home Screen icon rather than a browser tab.
+export const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
 // Opening the phone's file picker hides the page; this stops "lock when hidden" from firing meanwhile.
 export const lockGuard = { until: 0 };
 export function pickFile(input) {
   lockGuard.until = Date.now() + 120000;
+  // iOS doesn't know the .pvault type and greys such files out, so let it show every file.
+  // The file's contents are checked after it is chosen anyway.
+  if (isIOS() && /pvault/.test(input.accept)) input.removeAttribute('accept');
   input.click();
+}
+
+// iPhone's number keypad has no + or −, so sums like 250+120 need these keys.
+// pointerdown is cancelled so the amount box keeps focus and the keypad stays open.
+export function calcKeys(input) {
+  const keys = [['+', '+'], ['−', '-'], ['×', '*'], ['÷', '/']];
+  const wrap = document.createElement('div');
+  wrap.className = 'calc-keys';
+  wrap.innerHTML = keys.map(([label, op]) => `<button type="button" class="calc-key" data-op="${op}" aria-label="${label === '−' ? 'minus' : label}">${label}</button>`).join('');
+  wrap.addEventListener('pointerdown', (e) => e.preventDefault());
+  wrap.addEventListener('click', (e) => {
+    const op = e.target.closest('[data-op]')?.dataset.op;
+    if (!op) return;
+    const start = input.selectionStart ?? input.value.length;
+    const end = input.selectionEnd ?? input.value.length;
+    input.value = input.value.slice(0, start) + op + input.value.slice(end);
+    input.focus();
+    input.setSelectionRange(start + 1, start + 1);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  return wrap;
 }
 
 export const $ = (sel, root = document) => root.querySelector(sel);

@@ -1,7 +1,7 @@
 import { esc, icon, openSheet, closeSheet, toast, downloadFile, pickFile, $ } from '../ui.js';
 import { makeBackup, openBackup } from '../lib/crypto.js';
 import { verifyPassword, replaceState, flush } from '../store.js';
-import { catMap, accMap, parts } from '../calc.js';
+import { catMap, accMap, parts, vaultSummary } from '../calc.js';
 import { iso, prettyDate } from '../lib/dates.js';
 import { openStatementImport } from '../import-statement.js';
 
@@ -13,7 +13,7 @@ export function render(root, ctx) {
     <div class="card">
       <h2 class="card-title">${icon('shield', 18)} Encrypted backup</h2>
       <p>Creates a file locked with your master password. Use it to keep your data safe, and to move it between your phone and laptop.</p>
-      <p class="muted small">Last backup: ${last ? esc(prettyDate(last.slice(0, 10))) : 'never'}</p>
+      <p class="muted small">This device has ${esc(vaultSummary(state))}. Last backup: ${last ? esc(prettyDate(last.slice(0, 10))) : 'never'}</p>
       <div class="row-wrap">
         <button type="button" class="btn btn-primary" id="bk-export">${icon('download', 18)} Create backup file</button>
         <button type="button" class="btn" id="bk-import">${icon('upload', 18)} Open a backup file</button>
@@ -29,6 +29,16 @@ export function render(root, ctx) {
         <li>On the other device, open Paisa Vault, go to <strong>Backup &amp; sync</strong>, tap <strong>Open a backup file</strong> and choose <strong>Merge</strong>.</li>
       </ol>
       <p class="muted small">Merge adds entries that exist on the other device but not on this one. Deletions are not carried over by a merge. Use <strong>Replace</strong> to make this device an exact copy of the backup.</p>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title">Moving to a new phone</h2>
+      <ol class="steps">
+        <li>On the old phone, tap <strong>Create backup file</strong> and send the file to yourself (email, Google Drive or your laptop).</li>
+        <li>On the new phone, install Paisa Vault first. On iPhone: open the link in Safari, tap Share, then <strong>Add to Home Screen</strong>, and open it from that icon.</li>
+        <li>On its first screen, tap <strong>Restore from a backup file</strong>, pick the file and enter the old phone's master password.</li>
+        <li>Check that the number of entries above matches on both phones before you erase the old one.</li>
+      </ol>
     </div>
 
     <div class="card">
@@ -120,7 +130,7 @@ function importBackup(ctx, file) {
         await flush();
       }
       closeSheet();
-      toast(mode === 'replace' ? 'Data replaced from backup' : `Merged: ${added} new item${added === 1 ? '' : 's'} added`);
+      toast(mode === 'replace' ? `Replaced: now ${vaultSummary(data)}` : `Merged: ${added} new item${added === 1 ? '' : 's'} added`);
       ctx.rebuildShell();
     } catch (ex) {
       const er = $('#bi-err', panel); er.textContent = ex.message; er.hidden = false;

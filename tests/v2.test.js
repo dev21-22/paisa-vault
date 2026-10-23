@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 
 import {
   byCategory, accountBalances, netWorth, cardCycle, forecast, detectSubscriptions, spendingPace,
-  effectiveBudget, suggestCategory, accountByLast4, frequentEntries, findDuplicate, totals, balanceSeries,
+  effectiveBudget, suggestCategory, accountByLast4, frequentEntries, findDuplicate, totals, balanceSeries, vaultSummary,
 } from '../js/calc.js';
 import { parseCSV, detectColumns, statementRows, parseDate, parseAmount, cleanNarration } from '../js/lib/statement.js';
 import { parseSMS } from '../js/lib/sms.js';
@@ -244,4 +244,10 @@ test('merge across separately set-up devices does not duplicate accounts or cate
   assert.equal(t.categoryId, 'food');
   assert.deepEqual(t.splits.map((p) => p.categoryId), ['food', 'groc']);
   assert.equal(phone.budgets.food, 500);
+});
+
+test('vaultSummary counts entries and open accounts for comparing two devices', () => {
+  const s = { txns: Array.from({ length: 1234 }, () => ({})), accounts: [{}, {}, { archived: true }] };
+  assert.equal(vaultSummary(s), '1,234 entries and 2 accounts');
+  assert.equal(vaultSummary({ txns: [{}], accounts: [{}] }), '1 entry and 1 account');
 });

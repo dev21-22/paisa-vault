@@ -1,7 +1,7 @@
 // The add / edit transaction sheet, used from every screen.
 
 import { state, save, uid } from './store.js';
-import { openSheet, closeSheet, esc, icon, toast, money, $, $$, confirmSheet } from './ui.js';
+import { openSheet, closeSheet, esc, icon, toast, money, $, $$, confirmSheet, calcKeys } from './ui.js';
 import { evalAmount, suggestCategory, accountByLast4, frequentEntries, catMap } from './calc.js';
 import { iso, prettyDate } from './lib/dates.js';
 import { parseSMS } from './lib/sms.js';
@@ -227,7 +227,9 @@ export function openTxnForm(existing = null, preset = {}) {
     } else hint.textContent = 'You can type sums like 250+120';
     if (splits) updateLeft();
   };
-  if (!existing) setTimeout(() => amountEl.focus(), 50);
+  amountEl.closest('.amount-field').after(calcKeys(amountEl));
+  // Focus while still inside the tap, so iPhone opens the keypad straight away.
+  if (!existing) amountEl.focus({ preventScroll: true });
 
   $('#tf-note', panel).oninput = (e) => {
     if (userPickedCat || splits) return;

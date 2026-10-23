@@ -5,7 +5,7 @@
 // Settling up is a 'settlement' transaction: it moves money but is never spending or income.
 
 import { state, save, uid } from './store.js';
-import { openSheet, closeSheet, esc, icon, toast, money, confirmSheet, $, $$ } from './ui.js';
+import { openSheet, closeSheet, esc, icon, toast, money, confirmSheet, calcKeys, $, $$ } from './ui.js';
 import { evalAmount } from './calc.js';
 import { computeShares, balances, reminderText, upiLink, ME } from './lib/split.js';
 import { iso } from './lib/dates.js';
@@ -171,6 +171,7 @@ export function openSharedForm(existing = null, preset = {}) {
   $('#sf-paid', panel).onchange = (e) => { s.paidBy = e.target.value; $('#sf-acc-wrap', panel).hidden = s.paidBy !== ME; updateSum(); };
   $$('input[name=mode]', panel).forEach((r) => (r.onchange = renderRows));
   $('#sf-amt', panel).oninput = () => updateSum();
+  $('#sf-amt', panel).closest('.amount-field').after(calcKeys($('#sf-amt', panel)));
   const addNew = () => {
     const p = addPerson($('#sf-new', panel).value);
     if (!p) return;

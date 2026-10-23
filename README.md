@@ -100,6 +100,14 @@ After installing, the app works fully offline.
 
 To set up a new device, choose **Restore from a backup file** on the first screen.
 
+### Moving to a new phone (for example, Android to iPhone)
+1. Old phone: **Backup & sync → Create backup file**, then email the file to yourself or save it to Google Drive.
+2. iPhone: open the app's link in **Safari**, tap Share → **Add to Home Screen**, and open Paisa Vault **from that icon**. A Safari tab has its own separate storage, so restoring there would leave the Home Screen app empty.
+3. On the first screen, tap **Restore from a backup file**, choose the file (Files → Downloads, or Google Drive) and enter the old phone's master password.
+4. **Backup & sync** shows "This device has N entries and M accounts" on each phone. Erase the old phone only when the numbers match.
+
+On iPhone the app also adds: + − × ÷ keys under the amount (the iPhone keypad has none), a launch screen, a full-bleed Home Screen icon, a username field so the Passwords app can fill your master password with Face ID if you choose to save it, and a request that iOS never clears the vault to free up space.
+
 ## Run it on your laptop without hosting
 
 ```
