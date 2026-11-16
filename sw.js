@@ -1,6 +1,6 @@
 // Offline support. Caches only the app's own files, never your data (your data lives encrypted in IndexedDB).
 // Bump VERSION whenever app files change so phones pick up the update.
-const VERSION = 'pv-10';
+const VERSION = 'pv-11';
 
 const FILES = [
   './', './index.html', './manifest.webmanifest', './css/app.css',

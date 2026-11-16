@@ -13,15 +13,22 @@ let currentRoute = 'home';
 let routeParams = {};
 
 function getIncomingQuickAction() {
+  // 1. Check live URL sources (hash, search, full href).
   const fromHash = parseQuickAction(location.hash);
   if (fromHash) return fromHash;
   const fromSearch = parseQuickAction(location.search);
   if (fromSearch) return fromSearch;
   const fromHref = parseQuickAction(location.href);
   if (fromHref) return fromHref;
+  // 2. Fallback: localStorage stash (survives iOS WebClip process restarts
+  //    where sessionStorage is wiped). Expires after 2 minutes.
   try {
-    const s = sessionStorage.getItem('pv_quick');
-    if (s) return JSON.parse(s);
+    const raw = localStorage.getItem('pv_quick');
+    if (raw) {
+      const { action, ts } = JSON.parse(raw);
+      if (Date.now() - ts < 120000) return action;
+      localStorage.removeItem('pv_quick'); // expired
+    }
   } catch {}
   return null;
 }
@@ -29,14 +36,12 @@ function getIncomingQuickAction() {
 function stashQuickAction(action) {
   if (!action) return;
   try {
-    sessionStorage.setItem('pv_quick', JSON.stringify(action));
+    localStorage.setItem('pv_quick', JSON.stringify({ action, ts: Date.now() }));
   } catch {}
 }
 
 function clearQuickAction() {
-  try {
-    sessionStorage.removeItem('pv_quick');
-  } catch {}
+  try { localStorage.removeItem('pv_quick'); } catch {}
 }
 
 // ---------------- Boot ----------------
@@ -49,7 +54,16 @@ async function boot() {
   }
   registerSW();
   const incoming = getIncomingQuickAction();
-  if (incoming) stashQuickAction(incoming);
+  if (incoming) {
+    stashQuickAction(incoming);
+    // Strip quick-action fragments/params from the URL so they don't
+    // re-trigger on a soft refresh or on the hashchange listener.
+    if (location.search && /[?&](add|quick|action)=/i.test(location.search)) {
+      history.replaceState(null, '', location.pathname);
+    } else if (/^#(add|quick)\b/i.test(location.hash)) {
+      history.replaceState(null, '', location.pathname);
+    }
+  }
   if (await store.vaultExists()) showUnlock();
   else showSetup();
 }
@@ -172,12 +186,15 @@ function setFailures(n) {
 }
 
 function showUnlock() {
-  const hasQuick = !!getIncomingQuickAction();
+  // Capture the quick-action intent NOW, before the user interacts.
+  // This survives even if iOS clears the URL or sessionStorage by
+  // the time the user finishes typing their password.
+  const pendingQuick = getIncomingQuickAction();
   root.innerHTML = `
   <div class="lock-wrap"><div class="lock-card">
     <div class="brand">${icon('shield', 28)}<span>Paisa Vault</span></div>
     <h1>Unlock</h1>
-    ${hasQuick ? `<p class="tip">${icon('plus', 16)} <strong>Quick Add active</strong>: Enter password to log expense.</p>` : ''}
+    ${pendingQuick ? `<p class="tip">${icon('plus', 16)} <strong>Quick Add active</strong>: Enter password to log expense.</p>` : ''}
     <form id="ul-form" class="form" novalidate>
       <input type="text" class="visually-hidden" name="username" autocomplete="username" value="Paisa Vault" tabindex="-1" aria-hidden="true" readonly>
       <label class="field"><span class="label">Master password</span>
@@ -210,7 +227,7 @@ function showUnlock() {
     try {
       await store.unlock($('#ul-pw').value);
       setFailures(0);
-      await startApp();
+      await startApp(pendingQuick);
     } catch {
       setFailures(failures() + 1);
       err.textContent = 'Wrong password.';
@@ -235,7 +252,7 @@ function busy(btn, label) { if (btn) { btn.disabled = true; btn.dataset.label = 
 function unbusy(btn, html) { if (btn) { btn.disabled = false; btn.innerHTML = html; } }
 
 // ---------------- Main app ----------------
-async function startApp() {
+async function startApp(pendingQuickFromUnlock = null) {
   // Ask the browser never to clear the vault to free up space (iPhone grants this to Home Screen apps).
   navigator.storage?.persist?.().catch(() => {});
   const added = store.processRecurring();
@@ -244,7 +261,8 @@ async function startApp() {
   setTxnChangeHandler(() => refresh());
   setShareChangeHandler(() => refresh());
 
-  let quick = getIncomingQuickAction();
+  // Priority: explicit quick from unlock flow > stash/URL fallback
+  let quick = pendingQuickFromUnlock || getIncomingQuickAction();
   clearQuickAction();
   if (quick && store.state) quick = resolveQuickAction(quick, store.state);
 
@@ -255,7 +273,14 @@ async function startApp() {
   if (added) toast(`${added} recurring ${added === 1 ? 'entry' : 'entries'} added automatically`);
   if (quick) {
     if (location.hash !== `#${fromHash}`) history.replaceState(null, '', `#${fromHash}`);
-    setTimeout(() => openTxnForm(null, quick), 150);
+    // Use rAF to wait for the current paint, then open the sheet.
+    // This is more reliable than setTimeout on iOS WebKit, which can
+    // suppress the call when the JS task was started from an async chain.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        openTxnForm(null, quick);
+      });
+    });
   }
 }
 
