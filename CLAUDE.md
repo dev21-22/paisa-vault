@@ -52,6 +52,7 @@ Removing a feature: delete its registry entry, file, and `sw.js` line. Leave its
 - Backup `merge()` matches accounts/categories by name so separately set-up devices don't duplicate them.
 - `state.smsSeen` holds short SHA-256 hashes of bank SMS already reviewed. Never store SMS text itself.
 - Swipe/Repeat only apply to plain entries (`quickActionable()` in txn-form.js); split bills, settlements and corrections open their own sheets.
+- Quick add / deep-linking: `#add`, `#quick` or with parameters (`amount`, `note`, `type`, `cat`, `acc`, `last4`) parsed by `parseQuickAction()`; stashed in `pendingQuick` if the vault is locked and restored on unlock.
 
 ## Security rules (must keep)
 - **Escape all user text with `esc()`** before putting it in `innerHTML`, including names, notes, tags, category names.

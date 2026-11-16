@@ -44,6 +44,27 @@ export function render(root, ctx) {
     </div>
 
     <div class="card">
+      <h2 class="card-title">${icon('repeat', 18)} iPhone Double-Tap (Back Tap) &amp; Shortcuts</h2>
+      <p class="muted small">Tap the Apple logo on the back of your iPhone twice to log an expense instantly, just like Tappy.</p>
+      <div class="row-wrap">
+        <button type="button" class="btn btn-primary" id="st-copy-link">${icon('upload', 18)} Copy Quick Add Link</button>
+        <button type="button" class="btn" id="st-test-quick">${icon('plus', 18)} Test Quick Add</button>
+      </div>
+      <details class="about">
+        <summary>How to set up Back Tap on iPhone</summary>
+        <ol class="steps">
+          <li>Tap <strong>Copy Quick Add Link</strong> above to copy your instant URL.</li>
+          <li>Open the <strong>Shortcuts</strong> app on your iPhone and tap <strong>+</strong> to create a new shortcut named <em>Log Paisa</em>.</li>
+          <li>Add the action <strong>Open URLs</strong> and paste the link you copied.</li>
+          <li>Go to iPhone <strong>Settings → Accessibility → Touch → Back Tap → Double Tap</strong>.</li>
+          <li>Scroll down to the <em>Shortcuts</em> section and select <strong>Log Paisa</strong>.</li>
+          <li>Now, whenever you double-tap the back of your phone, Paisa Vault opens straight to the add screen with the keypad ready!</li>
+        </ol>
+        <p class="muted small"><strong>Optional Siri / Prompt mode:</strong> In Shortcuts, add <em>Ask for Number</em> with prompt "Amount?" before <em>Open URLs</em>, and open <code>&lt;link&gt;?amount=[Provided Input]</code>. You can also say <em>"Hey Siri, Log Paisa"</em>.</p>
+      </details>
+    </div>
+
+    <div class="card">
       <h2 class="card-title">Features</h2>
       <p class="muted small">Switch off what you don't use. Switching a feature off hides it but keeps its data.</p>
       <div class="feature-list">${FEATURES.map((f) => `
@@ -83,6 +104,18 @@ export function render(root, ctx) {
     ctx.save();
     ctx.rebuildShell();
   }));
+  $('#st-copy-link', root).onclick = async () => {
+    const url = `${location.origin}${location.pathname}#add`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast('Copied Quick Add link to clipboard');
+    } catch {
+      toast(`URL: ${url}`);
+    }
+  };
+  $('#st-test-quick', root).onclick = () => {
+    ctx.openTxnForm(null, { quick: true, amount: 0, note: '' });
+  };
   $('#st-pw', root).onclick = () => changePw();
   $('#st-wipe', root).onclick = async () => {
     if (!(await confirmSheet('Erase all data?', 'Every transaction, budget and setting on this device will be permanently deleted. This cannot be undone.', { yes: 'Erase everything' }))) return;

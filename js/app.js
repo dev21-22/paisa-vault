@@ -6,11 +6,12 @@ import { $, $$, esc, icon, toast, closeSheet, confirmSheet, lockGuard, pickFile,
 import { openTxnForm, setTxnChangeHandler } from './txn-form.js';
 import { setShareChangeHandler } from './share-form.js';
 import { passwordStrength, openBackup } from './lib/crypto.js';
-import { vaultSummary } from './calc.js';
+import { vaultSummary, parseQuickAction, resolveQuickAction } from './calc.js';
 
 const root = $('#root');
 let currentRoute = 'home';
 let routeParams = {};
+let pendingQuick = null;
 
 // ---------------- Boot ----------------
 async function boot() {
@@ -21,6 +22,7 @@ async function boot() {
     return;
   }
   registerSW();
+  pendingQuick = parseQuickAction(location.hash);
   if (await store.vaultExists()) showUnlock();
   else showSetup();
 }
@@ -196,10 +198,20 @@ function startApp() {
   renderShell();
   setTxnChangeHandler(() => refresh());
   setShareChangeHandler(() => refresh());
-  const fromHash = location.hash.replace('#', '');
-  go(FEATURES.some((f) => f.id === fromHash) || fromHash === 'more' ? fromHash : 'home');
+
+  let quick = pendingQuick || parseQuickAction(location.hash, store.state);
+  pendingQuick = null;
+  if (quick) quick = resolveQuickAction(quick, store.state);
+
+  const rawRoute = location.hash.replace('#', '').split('?')[0];
+  const fromHash = FEATURES.some((f) => f.id === rawRoute) || rawRoute === 'more' ? rawRoute : 'home';
+  go(fromHash);
   startAutoLock();
   if (added) toast(`${added} recurring ${added === 1 ? 'entry' : 'entries'} added automatically`);
+  if (quick) {
+    if (location.hash !== `#${fromHash}`) history.replaceState(null, '', `#${fromHash}`);
+    setTimeout(() => openTxnForm(null, quick), 80);
+  }
 }
 
 export function applyTheme() {
@@ -320,6 +332,18 @@ function startAutoLock() {
   }, 10000);
 }
 
+window.addEventListener('hashchange', () => {
+  if (!store.state) {
+    pendingQuick = parseQuickAction(location.hash);
+    return;
+  }
+  const quick = parseQuickAction(location.hash, store.state);
+  if (quick) {
+    history.replaceState(null, '', '#' + currentRoute);
+    openTxnForm(null, quick);
+  }
+});
+
 document.addEventListener('visibilitychange', () => {
   // Hide amounts from the phone's app-switcher preview.
   document.body.classList.toggle('privacy-blur', document.hidden);
@@ -327,10 +351,16 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden && store.state) {
     const mins = store.state.settings.autoLockMinutes;
     if (mins && Date.now() - lastActive > mins * 60000) lock();
+    const quick = parseQuickAction(location.hash, store.state);
+    if (quick) {
+      history.replaceState(null, '', '#' + currentRoute);
+      openTxnForm(null, quick);
+    }
   }
 });
 
 export async function lock() {
+  pendingQuick = null;
   if (!store.state) return;
   closeSheet();
   await store.flush();

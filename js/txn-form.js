@@ -142,7 +142,7 @@ export function openTxnForm(existing = null, preset = {}) {
   const form = $('#txn-form', panel);
   const amountEl = $('#tf-amount', panel);
   let selectedCat = t.categoryId;
-  let userPickedCat = !!existing;
+  let userPickedCat = !!existing || !!preset.categoryId;
   // Split rows: [{ categoryId, amount: string }]
   let splits = t.splits?.length ? t.splits.map((p) => ({ categoryId: p.categoryId, amount: String(fromPaise(p.amount)) })) : null;
 
@@ -255,7 +255,13 @@ export function openTxnForm(existing = null, preset = {}) {
   };
   amountEl.closest('.amount-field').after(calcKeys(amountEl));
   // Focus while still inside the tap, so iPhone opens the keypad straight away.
-  if (!existing) amountEl.focus({ preventScroll: true });
+  if (!existing) {
+    if (preset.quick && t.amount > 0 && !t.note) {
+      $('#tf-note', panel)?.focus({ preventScroll: true });
+    } else {
+      amountEl.focus({ preventScroll: true });
+    }
+  }
 
   $('#tf-note', panel).oninput = (e) => {
     if (userPickedCat || splits) return;

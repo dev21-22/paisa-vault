@@ -9,6 +9,7 @@ A private, encrypted expense tracker for your phone and laptop. It is free, work
 - **One-tap frequent entries:** items you add often (tea ₹20, metro ₹40) appear as buttons.
 - **Split transactions:** one DMart bill can be divided across Groceries and Household.
 - **Fill from a bank SMS:** one tap pastes a copied bank or UPI SMS and fills in the amount, merchant, date, *and the right account* (matched by its last 4 digits).
+- **iPhone Double-Tap (Back Tap & Shortcuts):** Tap the Apple logo on the back of your phone twice to open Paisa Vault straight into the add sheet with the keypad ready (just like Tappy). You can also ask Siri (*"Hey Siri, Log Paisa"*) or use an interactive Shortcuts prompt to log amounts without navigating menus. Setup steps and a copyable link are inside **Settings**.
 - **Bank SMS review:** paste many messages at once (**History → Bank SMS**). OTPs, reminders and failed payments are skipped, duplicates are spotted, and messages already reviewed are remembered (by a hash, never the text) so pasting the same batch again adds nothing. On iPhone, a Shortcuts automation can collect every bank SMS into a note for you; the steps are inside that screen.
 - **Swipe and repeat:** on phones, swipe an entry left to delete it (with Undo) or right to add it again for today. **Repeat today** is also in the edit sheet.
 - **Smart categories:** your own rules ("contains milkman → Groceries"), then your past entries, then 150+ common Indian merchants (Swiggy, Zomato, Uber, Jio, BigBasket, IRCTC and more).

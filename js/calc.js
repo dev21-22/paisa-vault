@@ -401,3 +401,89 @@ export function topMerchants(txns, limit = 10) {
     .sort((a, b) => b.amount - a.amount)
     .slice(0, limit);
 }
+
+// ---------- Quick Add & Deep Linking (iPhone Back Tap / Shortcuts) ----------
+
+// Parse a quick-add deep link (e.g. from an iPhone Double-Tap Shortcut, Siri, or Home Screen quick action).
+// Supports: #add, #quick, #expense, #income, #transfer, and query parameters:
+//   amount / amt: "250" or arithmetic "100+50"
+//   note / merchant / for: "Swiggy"
+//   type: "expense" | "income" | "transfer"
+//   cat / category: category name
+//   acc / account / last4: account name or last 4 digits
+export function parseQuickAction(raw, state = null) {
+  if (!raw) return null;
+  const hash = String(raw).replace(/^[#/]+/, '');
+  const [route, queryStr] = hash.split('?');
+  const validRoutes = ['add', 'quick', 'expense', 'income', 'transfer'];
+  if (!validRoutes.includes(route)) return null;
+
+  let type = ['expense', 'income', 'transfer'].includes(route) ? route : 'expense';
+  let amount = 0;
+  let note = '';
+  let categoryId = null;
+  let accountId = null;
+
+  if (queryStr) {
+    const params = new URLSearchParams(queryStr.replace(/\+/g, '%2B'));
+    const amtVal = params.get('amount') || params.get('amt');
+    if (amtVal) {
+      const evaluated = evalAmount(amtVal);
+      if (Number.isFinite(evaluated) && evaluated > 0) amount = evaluated;
+    }
+    const noteVal = params.get('note') || params.get('merchant') || params.get('for');
+    if (noteVal) note = noteVal.trim().slice(0, 120);
+
+    const typeVal = params.get('type')?.toLowerCase();
+    if (['expense', 'income', 'transfer'].includes(typeVal)) type = typeVal;
+  }
+
+  const action = {
+    quick: true,
+    type,
+    amount,
+    note,
+    categoryId,
+    accountId,
+    rawQuery: queryStr || null,
+  };
+
+  return state ? resolveQuickAction(action, state) : action;
+}
+
+// Resolves category and account matching once state is available (e.g. after unlocking the vault).
+export function resolveQuickAction(action, state) {
+  if (!action || !state) return action;
+  const res = { ...action };
+  if (res.rawQuery) {
+    const params = new URLSearchParams(res.rawQuery.replace(/\+/g, '%2B'));
+    if (!res.categoryId) {
+      const catVal = params.get('cat') || params.get('category');
+      if (catVal) {
+        const found = state.categories.find((c) => c.kind === res.type && c.name.toLowerCase() === catVal.toLowerCase().trim());
+        if (found) res.categoryId = found.id;
+      }
+      if (!res.categoryId && res.note) {
+        res.categoryId = suggestCategory(state, res.note, res.type);
+      }
+    }
+    if (!res.accountId) {
+      const last4 = params.get('last4');
+      if (last4) {
+        const acc = accountByLast4(state, last4);
+        if (acc) res.accountId = acc.id;
+      }
+      if (!res.accountId) {
+        const accName = params.get('acc') || params.get('account');
+        if (accName) {
+          const acc = state.accounts.find((a) => !a.archived && a.name.toLowerCase().includes(accName.toLowerCase().trim()));
+          if (acc) res.accountId = acc.id;
+        }
+      }
+    }
+  } else if (!res.categoryId && res.note) {
+    res.categoryId = suggestCategory(state, res.note, res.type);
+  }
+  return res;
+}
+
