@@ -28,7 +28,11 @@ async function boot() {
 }
 
 function registerSW() {
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then((reg) => reg.update())
+      .catch(() => {});
+  }
 }
 
 // ---------------- Setup (first run) ----------------
