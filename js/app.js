@@ -11,7 +11,33 @@ import { vaultSummary, parseQuickAction, resolveQuickAction } from './calc.js';
 const root = $('#root');
 let currentRoute = 'home';
 let routeParams = {};
-let pendingQuick = null;
+
+function getIncomingQuickAction() {
+  const fromHash = parseQuickAction(location.hash);
+  if (fromHash) return fromHash;
+  const fromSearch = parseQuickAction(location.search);
+  if (fromSearch) return fromSearch;
+  const fromHref = parseQuickAction(location.href);
+  if (fromHref) return fromHref;
+  try {
+    const s = sessionStorage.getItem('pv_quick');
+    if (s) return JSON.parse(s);
+  } catch {}
+  return null;
+}
+
+function stashQuickAction(action) {
+  if (!action) return;
+  try {
+    sessionStorage.setItem('pv_quick', JSON.stringify(action));
+  } catch {}
+}
+
+function clearQuickAction() {
+  try {
+    sessionStorage.removeItem('pv_quick');
+  } catch {}
+}
 
 // ---------------- Boot ----------------
 async function boot() {
@@ -22,7 +48,8 @@ async function boot() {
     return;
   }
   registerSW();
-  pendingQuick = parseQuickAction(location.hash);
+  const incoming = getIncomingQuickAction();
+  if (incoming) stashQuickAction(incoming);
   if (await store.vaultExists()) showUnlock();
   else showSetup();
 }
@@ -145,10 +172,12 @@ function setFailures(n) {
 }
 
 function showUnlock() {
+  const hasQuick = !!getIncomingQuickAction();
   root.innerHTML = `
   <div class="lock-wrap"><div class="lock-card">
     <div class="brand">${icon('shield', 28)}<span>Paisa Vault</span></div>
     <h1>Unlock</h1>
+    ${hasQuick ? `<p class="tip">${icon('plus', 16)} <strong>Quick Add active</strong>: Enter password to log expense.</p>` : ''}
     <form id="ul-form" class="form" novalidate>
       <input type="text" class="visually-hidden" name="username" autocomplete="username" value="Paisa Vault" tabindex="-1" aria-hidden="true" readonly>
       <label class="field"><span class="label">Master password</span>
@@ -169,7 +198,7 @@ function showUnlock() {
     try {
       await store.unlock($('#ul-pw').value);
       setFailures(0);
-      startApp();
+      await startApp();
     } catch {
       setFailures(failures() + 1);
       err.textContent = 'Wrong password.';
@@ -194,7 +223,7 @@ function busy(btn, label) { if (btn) { btn.disabled = true; btn.dataset.label = 
 function unbusy(btn, html) { if (btn) { btn.disabled = false; btn.innerHTML = html; } }
 
 // ---------------- Main app ----------------
-function startApp() {
+async function startApp() {
   // Ask the browser never to clear the vault to free up space (iPhone grants this to Home Screen apps).
   navigator.storage?.persist?.().catch(() => {});
   const added = store.processRecurring();
@@ -203,18 +232,18 @@ function startApp() {
   setTxnChangeHandler(() => refresh());
   setShareChangeHandler(() => refresh());
 
-  let quick = pendingQuick || parseQuickAction(location.hash, store.state);
-  pendingQuick = null;
-  if (quick) quick = resolveQuickAction(quick, store.state);
+  let quick = getIncomingQuickAction();
+  clearQuickAction();
+  if (quick && store.state) quick = resolveQuickAction(quick, store.state);
 
   const rawRoute = location.hash.replace('#', '').split('?')[0];
   const fromHash = FEATURES.some((f) => f.id === rawRoute) || rawRoute === 'more' ? rawRoute : 'home';
-  go(fromHash);
+  await go(fromHash);
   startAutoLock();
   if (added) toast(`${added} recurring ${added === 1 ? 'entry' : 'entries'} added automatically`);
   if (quick) {
     if (location.hash !== `#${fromHash}`) history.replaceState(null, '', `#${fromHash}`);
-    setTimeout(() => openTxnForm(null, quick), 80);
+    setTimeout(() => openTxnForm(null, quick), 150);
   }
 }
 
@@ -336,35 +365,37 @@ function startAutoLock() {
   }, 10000);
 }
 
-window.addEventListener('hashchange', () => {
+function checkQuickTrigger() {
+  const quick = getIncomingQuickAction();
+  if (!quick) return;
   if (!store.state) {
-    pendingQuick = parseQuickAction(location.hash);
+    stashQuickAction(quick);
     return;
   }
-  const quick = parseQuickAction(location.hash, store.state);
-  if (quick) {
-    history.replaceState(null, '', '#' + currentRoute);
-    openTxnForm(null, quick);
-  }
-});
+  clearQuickAction();
+  const resolved = resolveQuickAction(quick, store.state);
+  history.replaceState(null, '', '#' + currentRoute);
+  openTxnForm(null, resolved);
+}
+
+window.addEventListener('hashchange', checkQuickTrigger);
+window.addEventListener('pageshow', checkQuickTrigger);
 
 document.addEventListener('visibilitychange', () => {
   // Hide amounts from the phone's app-switcher preview.
   document.body.classList.toggle('privacy-blur', document.hidden);
   if (document.hidden && store.state?.settings.lockOnHide && Date.now() > lockGuard.until) lock();
-  if (!document.hidden && store.state) {
-    const mins = store.state.settings.autoLockMinutes;
-    if (mins && Date.now() - lastActive > mins * 60000) lock();
-    const quick = parseQuickAction(location.hash, store.state);
-    if (quick) {
-      history.replaceState(null, '', '#' + currentRoute);
-      openTxnForm(null, quick);
+  if (!document.hidden) {
+    if (store.state) {
+      const mins = store.state.settings.autoLockMinutes;
+      if (mins && Date.now() - lastActive > mins * 60000) lock();
     }
+    checkQuickTrigger();
   }
 });
 
 export async function lock() {
-  pendingQuick = null;
+  clearQuickAction();
   if (!store.state) return;
   closeSheet();
   await store.flush();

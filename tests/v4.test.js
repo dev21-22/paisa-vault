@@ -10,6 +10,11 @@ test('parseQuickAction recognizes quick routes and ignores regular page routes',
   assert.ok(parseQuickAction('#expense'));
   assert.ok(parseQuickAction('#income'));
   assert.ok(parseQuickAction('#transfer'));
+  assert.ok(parseQuickAction('?add=1'));
+  assert.ok(parseQuickAction('?quick=1'));
+  assert.ok(parseQuickAction('webapp://dev21-22.github.io/paisa-vault/#add'));
+  assert.ok(parseQuickAction('webapp://dev21-22.github.io/paisa-vault/?add=1'));
+  assert.ok(parseQuickAction('https://dev21-22.github.io/paisa-vault/?amount=250&add=1'));
 
   assert.equal(parseQuickAction('#home'), null);
   assert.equal(parseQuickAction('#reports'), null);

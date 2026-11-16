@@ -413,10 +413,39 @@ export function topMerchants(txns, limit = 10) {
 //   acc / account / last4: account name or last 4 digits
 export function parseQuickAction(raw, state = null) {
   if (!raw) return null;
-  const hash = String(raw).replace(/^[#/]+/, '');
-  const [route, queryStr] = hash.split('?');
-  const validRoutes = ['add', 'quick', 'expense', 'income', 'transfer'];
-  if (!validRoutes.includes(route)) return null;
+  const str = String(raw).trim();
+  if (!str) return null;
+
+  let route = '';
+  let queryStr = '';
+
+  // Extract route and query from hash, search string or URL
+  if (str.startsWith('?') || str.includes('/?') || str.includes('?')) {
+    const qPart = str.slice(str.indexOf('?') + 1).split('#')[0];
+    const params = new URLSearchParams(qPart.replace(/\+/g, '%2B'));
+    if (params.has('add') || params.has('quick') || params.get('action') === 'add' || params.get('action') === 'quick') {
+      route = 'add';
+      queryStr = qPart;
+    } else if (params.has('income') || params.get('type') === 'income') {
+      route = 'income';
+      queryStr = qPart;
+    } else if (params.has('transfer') || params.get('type') === 'transfer') {
+      route = 'transfer';
+      queryStr = qPart;
+    }
+  }
+
+  if (!route) {
+    const afterHash = str.includes('#') ? str.slice(str.indexOf('#') + 1) : str;
+    const [hRoute, hQuery] = afterHash.replace(/^[#/]+/, '').split('?');
+    const validRoutes = ['add', 'quick', 'expense', 'income', 'transfer'];
+    if (validRoutes.includes(hRoute)) {
+      route = hRoute;
+      queryStr = hQuery || '';
+    }
+  }
+
+  if (!route) return null;
 
   let type = ['expense', 'income', 'transfer'].includes(route) ? route : 'expense';
   let amount = 0;
