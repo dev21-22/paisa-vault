@@ -45,22 +45,22 @@ export function render(root, ctx) {
 
     <div class="card">
       <h2 class="card-title">${icon('repeat', 18)} iPhone Double-Tap (Back Tap) &amp; Shortcuts</h2>
-      <p class="muted small">Tap the Apple logo on the back of your iPhone twice to log an expense instantly, just like Tappy.</p>
+      <p class="muted small">Tap the Apple logo on the back of your iPhone twice to log an expense instantly in your installed app, just like Tappy.</p>
       <div class="row-wrap">
-        <button type="button" class="btn btn-primary" id="st-copy-link">${icon('upload', 18)} Copy Quick Add Link</button>
+        <button type="button" class="btn btn-primary" id="st-copy-link">${icon('upload', 18)} Copy Quick Add Link (PWA)</button>
         <button type="button" class="btn" id="st-test-quick">${icon('plus', 18)} Test Quick Add</button>
       </div>
       <details class="about">
-        <summary>How to set up Back Tap on iPhone</summary>
+        <summary>How to open your installed app (not Safari)</summary>
         <ol class="steps">
-          <li>Tap <strong>Copy Quick Add Link</strong> above to copy your instant URL.</li>
+          <li>Tap <strong>Copy Quick Add Link (PWA)</strong> above. It copies a <code>webapp://</code> link that opens your installed Home Screen app directly without opening Safari.</li>
           <li>Open the <strong>Shortcuts</strong> app on your iPhone and tap <strong>+</strong> to create a new shortcut named <em>Log Paisa</em>.</li>
-          <li>Add the action <strong>Open URLs</strong> and paste the link you copied.</li>
+          <li>Add the action <strong>Open URLs</strong> and paste the link: <code>webapp://${esc(location.host + location.pathname)}#add</code></li>
           <li>Go to iPhone <strong>Settings → Accessibility → Touch → Back Tap → Double Tap</strong>.</li>
           <li>Scroll down to the <em>Shortcuts</em> section and select <strong>Log Paisa</strong>.</li>
-          <li>Now, whenever you double-tap the back of your phone, Paisa Vault opens straight to the add screen with the keypad ready!</li>
+          <li>Now, whenever you double-tap the back of your phone, your installed app opens straight to the add screen with the keypad ready — 100% offline!</li>
         </ol>
-        <p class="muted small"><strong>Optional Siri / Prompt mode:</strong> In Shortcuts, add <em>Ask for Number</em> with prompt "Amount?" before <em>Open URLs</em>, and open <code>&lt;link&gt;?amount=[Provided Input]</code>. You can also say <em>"Hey Siri, Log Paisa"</em>.</p>
+        <p class="muted small"><strong>Why webapp://?</strong> Standard <code>https://</code> links open in Safari tabs. Changing the prefix to <code>webapp://</code> tells iOS to launch your standalone Home Screen app directly.</p>
       </details>
     </div>
 
@@ -105,12 +105,12 @@ export function render(root, ctx) {
     ctx.rebuildShell();
   }));
   $('#st-copy-link', root).onclick = async () => {
-    const url = `${location.origin}${location.pathname}#add`;
+    const url = `webapp://${location.host}${location.pathname}#add`;
     try {
       await navigator.clipboard.writeText(url);
-      toast('Copied Quick Add link to clipboard');
+      toast('Copied webapp:// link to clipboard');
     } catch {
-      toast(`URL: ${url}`);
+      toast(`Link: ${url}`);
     }
   };
   $('#st-test-quick', root).onclick = () => {
