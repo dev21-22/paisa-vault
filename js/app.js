@@ -185,10 +185,22 @@ function showUnlock() {
       <p class="error" id="ul-err" role="alert" hidden></p>
       <button class="btn btn-primary btn-block" type="submit">${icon('lock', 18)} Unlock</button>
     </form>
-    <button type="button" class="btn-link small" id="ul-forgot">Forgot password?</button>
+    <div class="row-between">
+      <button type="button" class="btn-link small" id="ul-forgot">Forgot password?</button>
+      <button type="button" class="btn-link small" id="ul-reload">Reload &amp; update</button>
+    </div>
   </div></div>`;
   $('#ul-pw').focus();
   const err = $('#ul-err');
+  $('#ul-reload')?.addEventListener('click', async () => {
+    if ('caches' in window) {
+      try {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      } catch {}
+    }
+    location.replace(location.pathname + '?r=' + Date.now());
+  });
   $('#ul-form').onsubmit = async (e) => {
     e.preventDefault();
     const wait = lockoutUntil() - Date.now();

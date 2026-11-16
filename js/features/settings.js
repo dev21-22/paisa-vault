@@ -49,6 +49,7 @@ export function render(root, ctx) {
       <div class="row-wrap">
         <button type="button" class="btn btn-primary" id="st-copy-link">${icon('upload', 18)} Copy Quick Add Link (PWA)</button>
         <button type="button" class="btn" id="st-test-quick">${icon('plus', 18)} Test Quick Add</button>
+        <button type="button" class="btn" id="st-reload-app">${icon('repeat', 18)} Force Reload / Check Updates</button>
       </div>
       <details class="about">
         <summary>How to open your installed app (not Safari)</summary>
@@ -115,6 +116,16 @@ export function render(root, ctx) {
   };
   $('#st-test-quick', root).onclick = () => {
     ctx.openTxnForm(null, { quick: true, amount: 0, note: '' });
+  };
+  $('#st-reload-app', root).onclick = async () => {
+    toast('Refreshing app files...');
+    if ('caches' in window) {
+      try {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      } catch {}
+    }
+    setTimeout(() => location.replace(location.pathname + '?r=' + Date.now()), 300);
   };
   $('#st-pw', root).onclick = () => changePw();
   $('#st-wipe', root).onclick = async () => {
